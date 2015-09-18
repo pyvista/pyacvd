@@ -11,11 +11,15 @@ above website.  Cython was used as much of the remeshing process is of an
 iterative nature.  This is currently a work in progress and any bugs within
 this module do not reflect the true nature of ACVD developed by S. Valette.
 
+This code has been tested with Ubuntu 14.10 and Windows 7 64-bit using
+Python 2.7.  It should be compatable with newer versions of Python, but this
+has not been tested (yet).
+
 
 Installation:
     $ pip install PyACVD
     # Note: if "Clustering_Cython" cannot be imported after this install,
-            install for a single user (below
+            install for a single user (below)
 
     - or for a single user -
     $ pip install PyACVD --user
