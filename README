@@ -13,16 +13,28 @@ this module do not reflect the true nature of ACVD developed by S. Valette.
 
 
 Installation:
-    $ pip install ACVD
+    $ pip install PyACVD
+    # Note: if "Clustering_Cython" cannot be imported after this install,
+            install for a single user (below
 
     - or for a single user -
-    $ pip install ACVD --user
+    $ pip install PyACVD --user
 
     - or download the source code and execute the following from the download folder: -
     $ python setup.py install
 
 
-Example:
+Install Tests:
+   from PyACVD import Tests
+
+   # Run Stanford bunny remeshing example/test
+   Tests.Remesh.Bunny()
+
+   # Run non-uniform sphere remeshing example/test
+   Tests.Remesh.Sphere()
+
+
+Example Code:
     from PyACVD import Clustering
     
     # Load mesh from file.  One method would be to load a *.stl file using:
