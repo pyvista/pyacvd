@@ -62,7 +62,7 @@ def PlotGrids(grids):
 
     N = len(grids)
     HSV_tuples = [(x*1.0/N, 0.5, 0.5) for x in range(N)]
-    RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+    RGB_tuples = [colorsys.hsv_to_rgb(*x) for x in HSV_tuples]
     
     actors = []
     for i in range(len(grids)):
@@ -120,7 +120,7 @@ def PlotGrids_wFEM(grids):
 
     N = len(grids)
     HSV_tuples = [(x*1.0/N, 0.5, 0.5) for x in range(N)]
-    RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+    RGB_tuples = [colorsys.hsv_to_rgb(*x) for x in HSV_tuples]
     
     actors = []
     for i in range(len(grids)):

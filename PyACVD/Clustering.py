@@ -70,9 +70,9 @@ Known bugs:
     
 """
 
-from __future__ import print_function
+
 import vtk
-import VTK_Plotting
+from . import VTK_Plotting
 from vtk.util import numpy_support as VN
 import numpy as np
 from scipy import sparse
