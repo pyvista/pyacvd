@@ -23,13 +23,17 @@ You can also visit `GitHub <https://github.com/akaszynski/PyACVD>`_ to download 
 
 Dependencies: ``numpy``, ``cython``, ``vtk``
 
-Install Tests:
+Tests
+-----
+
+.. code:: python
+
    from PyACVD import Tests
 
-   # Run Stanford bunny remeshing example/test
+   # Run Stanford bunny remeshing example
    Tests.Remesh.Bunny()
 
-   # Run non-uniform sphere remeshing example/test
+   # Run non-uniform sphere remeshing example
    Tests.Remesh.Sphere()
 
 
