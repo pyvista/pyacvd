@@ -3,14 +3,15 @@ import vtk
 from os.path import dirname, join, realpath
 from PyACVD import VTK_Plotting, Clustering
 
+
 def Bunny():
     """ Remesh a non-uniform mesh of the Stanford Bunny """
     # get location of this file
     pth = dirname(realpath(__file__))
-    filename = join(pth, 'StanfordBunny.stl')
+    filename = join(pth, 'StanfordBunny.ply')
     
     # Import STL of the Stanford Bunny
-    reader = vtk.vtkSTLReader()
+    reader = vtk.vtkPLYReader()
     reader.SetFileName(filename)
     reader.Update()
     mesh = reader.GetOutput()

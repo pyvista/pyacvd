@@ -190,10 +190,10 @@ class Cluster(object):
         
         # Compute initial clusters
         if verbose:
-            print('Computing initial {:d} clusters... '.format(nclus), end='\r')
+            print('Computing initial {:d} clusters... '.format(nclus))
             clusters = Clustering_Cython.InitClustersInterface(neighbors, nneigh, self.area,
                                                                    nclus)
-            print('Done!'.format(nclus), end='\r')
+            print('Done!'.format(nclus))
             
         # Optimize cluster positions
         wcent = self.cent*self.area.reshape((-1, 1))
@@ -222,6 +222,7 @@ class Cluster(object):
                 print('Exiting repair process early.  Disconnected clusters may still remain')
 
         self.clusters = np.asarray(self.clusters)
+
 
     def GetDisconnected(self):
         
@@ -274,8 +275,9 @@ class Cluster(object):
             raise Exception('Mesh not generated yet')              
 
 
-
-######################################## PRIVATE FUNCTIONS #########################################
+#==============================================================================
+# Private functions
+#==============================================================================
 def VertFacetoPoly(new_pt, new_fc):
     """ Creates a vtk polydata object given points and triangular faces """
     

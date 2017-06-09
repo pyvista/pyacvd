@@ -1,9 +1,19 @@
 """ Setup.py for ACVD.py """
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Distutils import build_ext
+
 import os
-import numpy
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext as _build_ext
+
+
+class build_ext(_build_ext):
+    """ build class that includes numpy directory """
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
+        
 
 def read(*paths):
     with open(os.path.join(*paths), 'r') as f:
@@ -12,16 +22,16 @@ def read(*paths):
 setup(
     name='PyACVD',
     packages = ['PyACVD', 'PyACVD.Tests'], # this must be the same as the name above
-#    py_modules=['PyACVD'],
 
-    version='0.1.0', # alpha release
+    version='0.1.1',
     description='Uniformly remeshes vtk surface meshes',
-    long_description=read('description.rst'),
+    long_description=read('README.rst'),
 
     # Cython directives
     cmdclass = {'build_ext': build_ext},
-    ext_modules=[Extension("PyACVD.Clustering_Cython",["PyACVD/cython/Clustering_Cython.pyx"],
-                           language='c++', include_dirs=[numpy.get_include()])],
+    ext_modules=[Extension("PyACVD.Clustering_Cython",
+                           ["PyACVD/cython/Clustering_Cython.pyx"],
+                           language='c++')],
 
     url='https://github.com/akaszynski/PyACVD',
     author='Alex Kaszynski',
@@ -41,10 +51,11 @@ setup(
 
         # Tested only on Python 2.7
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
-    keywords='vtk uniform meshing remeshing',
-    package_data={'PyACVD.Tests': ['StanfordBunny.stl']},
-    include_dirs=[numpy.get_include()]
+    keywords='vtk uniform meshing remeshing, acvd',
+    package_data={'PyACVD.Tests': ['StanfordBunny.ply']}
     
 )

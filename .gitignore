@@ -1,0 +1,25 @@
+# Compiled source #
+###################
+*.pyc
+*.pyd
+*.c
+*.cpp
+*.so
+*.o
+
+# OS generated files #
+######################
+.fuse_hidden*
+*~
+
+# Pip generated folders #
+#########################
+PyACVD.egg-info/
+build/
+dist/
+
+# MISC
+pyansys/Interface.py
+
+# Testing
+Testing/
