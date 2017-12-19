@@ -3,7 +3,8 @@
 import os
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
-
+from distutils.core import setup
+from Cython.Build import cythonize
 
 class build_ext(_build_ext):
     """ build class that includes numpy directory """
@@ -29,9 +30,9 @@ setup(
 
     # Cython directives
     cmdclass = {'build_ext': build_ext},
-    ext_modules=[Extension("PyACVD.Clustering_Cython",
+    ext_modules= cythonize([Extension("PyACVD.Clustering_Cython",
                            ["PyACVD/cython/Clustering_Cython.pyx"],
-                           language='c++')],
+                           language='c++')]),
 
     url='https://github.com/akaszynski/PyACVD',
     author='Alex Kaszynski',
