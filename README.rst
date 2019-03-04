@@ -57,7 +57,7 @@ This example loads a surface mesh, generates 10000 clusters, and creates a unifo
     mesh = stlReader.GetOutput()
     
     # Create clustering object
-    cobj = Clustering.Cluster(target)
+    cobj = Clustering.Cluster(mesh)
 
     # Generate clusters
     cobj.GenClusters(10000)
@@ -66,7 +66,7 @@ This example loads a surface mesh, generates 10000 clusters, and creates a unifo
     cobj.GenMesh()
 
     # Get mesh
-    remesh = cobj.ReturnNewMesh()
+    remesh = cobj.ReturnMesh()
     
     
     # The clustered original mesh and new mesh can be viewed with:
