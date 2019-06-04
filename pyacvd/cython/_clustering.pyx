@@ -1071,3 +1071,82 @@ cdef int max_con_face(int npoints, int [:, ::1] f):
     return mxval
 
 
+def subdivision(double [:, ::1] v, int [:, ::1] f):
+    """Subdivide triangles 
+
+    Parameters
+    ----------
+    v : double np.ndarray
+        Point array
+
+    f : np.ndarray
+        n x 4 face array.  First column is padding and is ignored.
+    """
+    cdef int nface = f.shape[0]
+    cdef int nvert = v.shape[0]
+    cdef int i, j
+
+    # Vertex and face arrays for maximum possible array sizes
+    cdef double [:, ::1] newv = np.empty((nvert + nface*3, 3))
+    cdef int [:, ::1] newf = np.empty((nface*4, 4), dtype=ctypes.c_int)
+
+    # copy existing vertex array
+    for i in range(nvert):
+        for j in range(3):
+            newv[i, j] = v[i, j]
+
+    # split triangle into three new ones
+    cdef int vc = nvert
+    cdef int fc = 0
+    cdef int point0, point1, point2
+    for i in range(nface):    
+        point0 = f[i, 1]
+        point1 = f[i, 2]
+        point2 = f[i, 3]
+
+        # Face 0
+        newf[fc, 0] = 3
+        newf[fc, 1] = point0
+        newf[fc, 2] = vc
+        newf[fc, 3] = vc + 2
+        fc += 1
+
+        # Face 1
+        newf[fc, 0] = 3
+        newf[fc, 1] = point1
+        newf[fc, 2] = vc + 1
+        newf[fc, 3] = vc
+        fc += 1
+
+        # Face 2
+        newf[fc, 0] = 3
+        newf[fc, 1] = point2
+        newf[fc, 2] = vc + 2
+        newf[fc, 3] = vc + 1
+        fc += 1
+
+        # Face 3
+        newf[fc, 0] = 3
+        newf[fc, 1] = vc
+        newf[fc, 2] = vc + 1
+        newf[fc, 3] = vc + 2
+        fc += 1
+
+        # New Vertices 
+        newv[vc, 0] = (v[point0, 0] + v[point1, 0])*0.5
+        newv[vc, 1] = (v[point0, 1] + v[point1, 1])*0.5
+        newv[vc, 2] = (v[point0, 2] + v[point1, 2])*0.5
+        vc += 1
+
+        newv[vc, 0] = (v[point1, 0] + v[point2, 0])*0.5
+        newv[vc, 1] = (v[point1, 1] + v[point2, 1])*0.5
+        newv[vc, 2] = (v[point1, 2] + v[point2, 2])*0.5
+        vc += 1
+
+        newv[vc, 0] = (v[point0, 0] + v[point2, 0])*0.5    
+        newv[vc, 1] = (v[point0, 1] + v[point2, 1])*0.5    
+        newv[vc, 2] = (v[point0, 2] + v[point2, 2])*0.5    
+        vc += 1
+
+    # Splice and return
+    return np.asarray(newv), np.asarray(newf)

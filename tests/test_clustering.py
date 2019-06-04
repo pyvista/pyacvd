@@ -31,10 +31,10 @@ def test_bunny():
 
 def test_cylinder():
     cylinder = pv.Cylinder().tri_filter()
-    cylinder.clean(inplace=True)
-    cylinder.subdivide(3, inplace=True)
+    # cylinder.clean(inplace=True)
 
     clus = pyacvd.Clustering(cylinder)
+    clus.subdivide(3)
     nclus = 500
     clus.cluster(nclus)
 
@@ -49,9 +49,8 @@ def test_cow():
     cow.tri_filter(inplace=True)
 
     # mesh is not dense enough for uniform remeshing
-    cow.subdivide(4, inplace=True)
-
     clus = pyacvd.Clustering(cow)
+    clus.subdivide(3)
     clus.cluster(20000)
     
     clus.plot(off_screen=True)

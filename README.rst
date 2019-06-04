@@ -40,12 +40,9 @@ This example remeshes a non-uniform quad mesh into a uniform triangular mesh.
 
 .. code:: python
 
-    # mesh is not dense enough for uniform remeshing
-    # must be an all triangular mesh to sub-divide
-    cow.tri_filter(inplace=True)
-    cow.subdivide(4, inplace=True)
-
     clus = pyacvd.Clustering(cow)
+    # mesh is not dense enough for uniform remeshing
+    clus.subdivide(3)
     clus.cluster(20000)
 
     # plot clustered cow mesh

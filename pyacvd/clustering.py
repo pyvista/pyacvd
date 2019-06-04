@@ -15,8 +15,18 @@ class Clustering(object):
         if mesh.faces.size % 4:
             mesh = mesh.tri_filter()
 
-        self.mesh = mesh
+        self.mesh = mesh.copy()
+        self.clusters = None
+        self.nclus = None
+        self.remesh = None
+        self._area = None
+        self._wcent = None
+        self._neigh = None
+        self._nneigh = None
+        self._edges = None
+        self._update_data(weights)
 
+    def _update_data(self, weights=None):
         # Compute point weights and weighted points
         self._area, self._wcent = weighted_points(self.mesh,
                                                   additional_weights=weights)
@@ -24,9 +34,6 @@ class Clustering(object):
         # neighbors and edges
         self._neigh, self._nneigh = neighbors_from_mesh(self.mesh)
         self._edges = _clustering.edge_id(self._neigh, self._nneigh)
-        self.clusters = None
-        self.nclus = None
-        self.remesh = None
 
     def cluster(self, nclus, maxiter=100, debug=False, iso_try=10):
         """Cluster points """
@@ -40,6 +47,17 @@ class Clustering(object):
                                                            iso_try)
 
         return self.clusters
+
+    def subdivide(self, nsub):
+        """Perform a linear subdivision of the mesh
+
+        Parameters
+        ----------
+        nsub : int
+            Number of subdivisions
+        """
+        self.mesh.overwrite(_subdivide(self.mesh, nsub))
+        self._update_data()
 
     def plot(self, random_color=True, **kwargs):
         """ Plot clusters if available
@@ -281,3 +299,21 @@ def neighbors_from_mesh(mesh):
         faces = faces.astype(np.int32)
 
     return _clustering.neighbors_from_faces(npoints, faces)
+
+
+def _subdivide(mesh, nsub):
+    """Perform a linear subdivision of a mesh"""
+    new_faces = mesh.faces.reshape(-1, 4)
+    if new_faces.dtype != np.int32:
+        new_faces = new_faces.astype(np.int32)
+
+    new_points = mesh.points
+    if new_points.dtype != np.double:
+        new_points = new_points.astype(np.double)
+
+    for _ in range(nsub):
+        new_points, new_faces = _clustering.subdivision(new_points, new_faces)
+
+    sub_mesh = pv.PolyData(new_points, new_faces)
+    sub_mesh.clean(inplace=True)
+    return sub_mesh
