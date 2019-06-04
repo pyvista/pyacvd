@@ -14,12 +14,6 @@
 
 # Pip generated folders #
 #########################
-PyACVD.egg-info/
+pyacvd.egg-info/
 build/
 dist/
-
-# MISC
-pyansys/Interface.py
-
-# Testing
-Testing/

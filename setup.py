@@ -1,8 +1,16 @@
-""" Setup.py for ACVD.py """
-
+"""Setup for pyacvd"""
 import os
+from io import open as io_open
+
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
+
+# Get version from version info
+__version__ = None
+version_file = os.path.join(os.path.dirname(__file__), 'pyacvd', '_version.py')
+with io_open(version_file, mode='r') as fd:
+    # execute file from raw string
+    exec(fd.read())
 
 
 class build_ext(_build_ext):
@@ -19,43 +27,39 @@ def read(*paths):
     with open(os.path.join(*paths), 'r') as f:
         return f.read()
 
-setup(
-    name='PyACVD',
-    packages = ['PyACVD', 'PyACVD.Tests'], # this must be the same as the name above
 
-    version='0.1.1',
-    description='Uniformly remeshes vtk surface meshes',
+setup(
+    name='pyacvd',
+    packages = ['pyacvd'],
+    version=__version__,
+    description='Uniformly remeshes surface meshes',
     long_description=read('README.rst'),
 
     # Cython directives
     cmdclass = {'build_ext': build_ext},
-    ext_modules=[Extension("PyACVD.Clustering_Cython",
-                           ["PyACVD/cython/Clustering_Cython.pyx"],
+    ext_modules=[Extension("pyacvd._clustering",
+                           ["pyacvd/cython/_clustering.pyx"],
                            language='c++')],
 
-    url='https://github.com/akaszynski/PyACVD',
+    url='https://github.com/akaszynski/pyacvd',
     author='Alex Kaszynski',
     author_email='akascap@gmail.com',
-
-    # Choose your license
-    license='CECILL-B',
+    license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
-
-        # Target audience
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Information Analysis',
-
-        # CECIL-B license
-        'License :: OSI Approved :: CEA CNRS Inria Logiciel Libre License, version 2.1 (CeCILL-2.1)',
-
-        # Tested only on Python 2.7
-        'Programming Language :: Python :: 2.7',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX',
+        'Operating System :: MacOS',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
+    install_requires=['pyvista', 'scipy'],
     keywords='vtk uniform meshing remeshing, acvd',
-    package_data={'PyACVD.Tests': ['StanfordBunny.ply']}
     
 )

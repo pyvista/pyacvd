@@ -1,102 +1,60 @@
-PyACVD
+pyacvd
 ======
-
-This module takes a vtk surface mesh (vtkPolyData) surface and returns a
-uniformly meshed surface also as a vtkPolyData.  It is based on research by:
-S. Valette, and J. M. Chassery in `ACVD <https://github.com/valette/ACVD>`_.
-
-Much of this code was translated from the C++ source code available on the
-above website.  Cython was used as much of the remeshing process is of an
-iterative nature.  This is currently a work in progress and any bugs within
-this module do not reflect the true nature of ACVD developed by S. Valette.
+This module takes a surface mesh and returns a uniformly meshed surface using voronoi clustering.  This approach is loosely based on research by S. Valette, and J. M. Chassery in `ACVD <https://github.com/valette/ACVD>`_.
 
 
 Installation
 ------------
-
 Installation is straightforward using pip::
 
-    $ pip install PyACVD
-    
-You can also visit `GitHub <https://github.com/akaszynski/PyACVD>`_ to download the latest source and install it running the following from the source directory::
-
-    $ pip install .
-
-You will need a working copy of VTK.  This can be obtained by either building for the source or installing it using a Python distrubution like `Anaconda <https://www.continuum.io/downloads>`_.  The other dependencies are ``numpy`` and ``cython``.
-
-Tests
------
-
-You can test if your installation works by running the following tests included in the package.
-
-.. code:: python
-
-   from PyACVD import Tests
-
-   # Run Stanford bunny remeshing example
-   Tests.Remesh.Bunny()
-
-   # Run non-uniform sphere remeshing example
-   Tests.Remesh.Sphere()
+    $ pip install pyacvd
 
 
 Example
 -------
-
-This example loads a surface mesh, generates 10000 clusters, and creates a uniform mesh.
+This example remeshes a non-uniform quad mesh into a uniform triangular mesh.
 
 .. code:: python
 
-    from PyACVD import Clustering
-    
-    # Load mesh from file.
-    filename = 'file.stl'
-    stlReader = vtk.vtkSTLReader() 
-    stlReader.SetFileName(filename) 
-    stlReader.Update()
-    mesh = stlReader.GetOutput()
-    
-    # Create clustering object
-    cobj = Clustering.Cluster(target)
+    from pyvista import examples
+    import pyacvd
 
-    # Generate clusters
-    cobj.GenClusters(10000)
-    
-    # Generate uniform mesh
-    cobj.GenMesh()
+    # download cow mesh
+    cow = examples.download_cow()
 
-    # Get mesh
-    remesh = cobj.ReturnNewMesh()
-    
-    
-    # The clustered original mesh and new mesh can be viewed with:
-    cobj.PlotClusters()   # must run cobj.GenClusters first
-    cobj.PlotRemesh()     # must run cobj.GenMesh first
+    # plot original mesh
+    cow.plot(show_edges=True, color='w')
 
+.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow.png
+    :alt: original cow mesh
 
-Python Algorthim Restrictions
------------------------------
+.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow_zoom.png
+    :alt: zoomed cow mesh
 
-The `vtkPolyData` mesh should not contain duplicate points (i.e. adjcent faces
-should share identical points).  If not already done so, clean the mesh
-using `vtk.vtkCleanPolyData`
-    
-The number of resulting points is limited by the available memory of the
-host computer.  If approaching the upper limit of your available memory,
-reduce the "subratio" option when generating the mesh.  As it will be
-pointed out below, the coarser the mesh, the less accurate the solution.
-    
-The input mesh should be composed of one surface.  Unexpected behavior
-may result from a multiple input meshes, though some testing has shown
-that it is stable.
-    
-Holes in the input mesh may not be filled by the module and will result in
-a non-manifold output.
+.. code:: python
 
+    # mesh is not dense enough for uniform remeshing
+    # must be an all triangular mesh to sub-divide
+    cow.tri_filter(inplace=True)
+    cow.subdivide(4, inplace=True)
 
-Known bugs
-----------
+    clus = pyacvd.Clustering(cow)
+    clus.cluster(20000)
 
-- Cluster sizes are highly dependent on initial cluster placement.
-- Clusters one face (or point) large will generate highly non-uniform meshes.
-    
+    # plot clustered cow mesh
+    clus.plot()
+
+.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow_clus.png
+    :alt: zoomed cow mesh
+
+.. code:: python
+
+    # remesh
+    remesh = clus.create_mesh()
+
+    # plot uniformly remeshed cow
+    remesh.plot(color='w', show_edges=True)
+
+.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow_remesh.png
+    :alt: zoomed cow mesh
+
