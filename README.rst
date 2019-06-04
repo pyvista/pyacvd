@@ -1,5 +1,12 @@
 pyacvd
 ======
+.. image:: https://img.shields.io/pypi/v/pyacvd.svg
+    :target: https://pypi.org/project/pyacvd/
+
+.. image:: https://travis-ci.org/pyvista/pyacvd.svg?branch=master
+    :target: https://travis-ci.org/pyvista/pyacvd
+
+
 This module takes a surface mesh and returns a uniformly meshed surface using voronoi clustering.  This approach is loosely based on research by S. Valette, and J. M. Chassery in `ACVD <https://github.com/valette/ACVD>`_.
 
 
