@@ -45,11 +45,10 @@ install:
       brew upgrade python
       # CFLAGS='-stdlib=libc++'
     fi;
-  # for building docs in linux
-  - |
-    if [ "$TRAVIS_OS_NAME" != "osx" ]; then
-      pip3 install -r requirements.txt
-    fi;
+  # - |
+    # if [ "$TRAVIS_OS_NAME" != "osx" ]; then
+    #   pip3 install -r requirements.txt
+    # fi;
   - pip3 install --upgrade cibuildwheel
 
 
