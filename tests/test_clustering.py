@@ -9,10 +9,19 @@ import pyacvd
 NO_PLOTTING = not system_supports_plotting()
 
 
-bunny = examples.download_bunny()
-cow = examples.download_cow()
+try:
+    bunny = examples.download_bunny()
+except:
+    bunny = None
+
+try:
+    cow = examples.download_cow()
+except:
+    cow = None
 
 
+
+@pytest.mark.skipif(bunny is None, reason="Requires example data")
 def test_bunny():
     clus = pyacvd.Clustering(bunny)
     clus.cluster(5000)
@@ -33,6 +42,7 @@ def test_cylinder():
     assert remesh.n_points == nclus
 
 
+@pytest.mark.skipif(cow is None, reason="Requires example data")
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_cow():
     # must be an all triangular mesh to sub-divide
