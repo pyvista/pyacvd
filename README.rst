@@ -25,10 +25,10 @@ This example remeshes a non-uniform quad mesh into a uniform triangular mesh.
     # plot original mesh
     cow.plot(show_edges=True, color='w')
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow.png
+.. image:: https://github.com/pyvista/pyacvd/raw/master/docs/images/cow.png
     :alt: original cow mesh
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow_zoom.png
+.. image:: https://github.com/pyvista/pyacvd/raw/master/docs/images/cow_zoom.png
     :alt: zoomed cow mesh
 
 .. code:: python
@@ -44,7 +44,7 @@ This example remeshes a non-uniform quad mesh into a uniform triangular mesh.
     # plot clustered cow mesh
     clus.plot()
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow_clus.png
+.. image:: https://github.com/pyvista/pyacvd/raw/master/docs/images/cow_clus.png
     :alt: zoomed cow mesh
 
 .. code:: python
@@ -55,6 +55,5 @@ This example remeshes a non-uniform quad mesh into a uniform triangular mesh.
     # plot uniformly remeshed cow
     remesh.plot(color='w', show_edges=True)
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/images/cow_remesh.png
+.. image:: https://github.com/pyvista/pyacvd/raw/master/docs/images/cow_remesh.png
     :alt: zoomed cow mesh
-
