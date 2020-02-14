@@ -33,7 +33,7 @@ jobs:
       displayName: 'Use Python $(python.version)'
     - script: |
         set -ex
-	chmod +x .ci/build_wheels.sh
+        chmod +x .ci/build_wheels.sh
         docker run -e PLAT=$(plat) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/.ci/build_wheels.sh
         ls -lh wheelhouse/
         mkdir -p dist
