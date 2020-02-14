@@ -52,6 +52,6 @@ def test_cow():
     clus = pyacvd.Clustering(cow)
     clus.subdivide(3)
     clus.cluster(20000)
-    
+
     clus.plot(off_screen=True)
     remesh = clus.create_mesh()
