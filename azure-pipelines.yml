@@ -11,7 +11,7 @@ trigger:
     include:
     - '*'
 
-# Build multiple version of python linux wheels in single job.  
+# Build multiple version of python linux wheels in single job.
 # As we have to start docker and download a docker image, it's more
 # efficient to have multiple builds on one image, especially
 # considering we share this with pyvista.
@@ -23,7 +23,7 @@ jobs:
         arch: x86_64
         plat: manylinux2010_x86_64
         image: quay.io/pypa/manylinux2010_x86_64
-        python.architecture: x64  
+        python.architecture: x64
   pool:
     vmImage: 'ubuntu-18.04'
   steps:
@@ -42,7 +42,7 @@ jobs:
         find . -type f -name '$(package_name)-*' | while read FILE ; do
           NEWFILE="$(echo ${FILE} |sed -e 's/\linux/manylinux1/')"
           cp "${FILE}" ../dist/"${NEWFILE}" ;
-        done 
+        done
         cd ..
       displayName: Build wheels
     - template: .ci/azure-publish-dist.yml
