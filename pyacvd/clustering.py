@@ -216,7 +216,7 @@ def create_mesh(mesh, area, clusters, cnorm, flipnorm=True):
         f[mask] = f[mask, ::-1]
 
     # Create vtk surface
-    triangles = np.empty((f.shape[0], 4))
+    triangles = np.empty((f.shape[0], 4), dtype=f.dtype)
     triangles[:, -3:] = f
     triangles[:, 0] = 3
     return pv.PolyData(points, triangles.ravel())
