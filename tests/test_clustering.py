@@ -55,3 +55,4 @@ def test_cow():
 
     clus.plot(off_screen=True)
     remesh = clus.create_mesh()
+    assert remesh.n_points

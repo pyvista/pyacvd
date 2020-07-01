@@ -1,4 +1,5 @@
 """Point based clustering module"""
+import ctypes
 import numpy as np
 from scipy import sparse
 import pyvista as pv
@@ -7,12 +8,30 @@ from pyacvd import _clustering
 
 
 class Clustering(object):
-    """ Point Clustering Routine"""
+    """Uniform point clustering based on ACVD.
 
-    def __init__(self, mesh, weights=None):
+    Parameters
+    ----------
+    mesh : pyvista.PolyData
+        Mesh to cluster.
+
+    Examples
+    --------
+    Perform a uniform recluster the stanford bunny
+
+    >>> from pyvista import examples
+    >>> import pyacvd
+    >>> mesh = examples.download_bunny()
+    >>> clus = pyacvd.Clustering()
+    >>> clus.cluster()
+    >>> remeshed = clus.create_mesh()
+
+    """
+
+    def __init__(self, mesh):
         """Check inputs and initializes neighbors"""
-        # verify mesh is triangular
-        if mesh.faces.size % 4:
+        # mesh must be triangular
+        if not mesh.is_all_triangles():
             mesh = mesh.triangulate()
 
         self.mesh = mesh.copy()
@@ -24,7 +43,7 @@ class Clustering(object):
         self._neigh = None
         self._nneigh = None
         self._edges = None
-        self._update_data(weights)
+        self._update_data(None)
 
     def _update_data(self, weights=None):
         # Compute point weights and weighted points
@@ -122,7 +141,9 @@ class Clustering(object):
         cnorm[:, 0] = np.bincount(self.clusters, weights=norm[:, 0] * self._area)
         cnorm[:, 1] = np.bincount(self.clusters, weights=norm[:, 1] * self._area)
         cnorm[:, 2] = np.bincount(self.clusters, weights=norm[:, 2] * self._area)
-        cnorm /= ((cnorm * cnorm).sum(1)**0.5).reshape((-1, 1))
+        weights = ((cnorm * cnorm).sum(1)**0.5).reshape((-1, 1))
+        weights[weights == 0] = 1
+        cnorm /= weights
         return cnorm
 
     @property
@@ -132,7 +153,9 @@ class Clustering(object):
         cval = np.vstack((np.bincount(self.clusters, weights=wval[:, 0]),
                           np.bincount(self.clusters, weights=wval[:, 1]),
                           np.bincount(self.clusters, weights=wval[:, 2])))
-        cval /= np.bincount(self.clusters, weights=self._area)
+        weights = np.bincount(self.clusters, weights=self._area)
+        weights[weights == 0] = 1
+        cval /= weights
         return cval.T
 
 
@@ -147,6 +170,7 @@ def cluster_centroid(cent, area, clusters):
 
     wval = cent * area.reshape(-1, 1)
     cweight = np.bincount(clusters, weights=area)
+    cweight[cweight == 0] = 1
 
     cval = np.vstack((np.bincount(clusters, weights=wval[:, 0]),
                       np.bincount(clusters, weights=wval[:, 1]),
