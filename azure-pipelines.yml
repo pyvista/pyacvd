@@ -11,10 +11,6 @@ trigger:
     include:
     - '*'
 
-# Build multiple version of python linux wheels in single job.
-# As we have to start docker and download a docker image, it's more
-# efficient to have multiple builds on one image, especially
-# considering we share this with pyvista.
 jobs:
 - job: Linux
   strategy:
@@ -37,7 +33,6 @@ jobs:
     - script: |
         set -ex
         chmod +x .ci/build_wheels.sh
-        docker pull quay.io/pypa/manylinux2010_x86_64
         docker run -e package_name=$(package_name) --rm -v `pwd`:/io quay.io/pypa/manylinux2010_x86_64 /io/.ci/build_wheels.sh $(python.version)
       displayName: Build wheel using manylinux2010
     - script: |
