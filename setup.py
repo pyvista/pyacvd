@@ -12,6 +12,25 @@ with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
 
+def check_cython():
+    """Check if binaries exist and if not check if Cython is installed"""
+    has_binaries = False
+    for filename in os.listdir('pyacvd'):
+        if '_clustering' in filename:
+            has_binaries = True
+
+    if not has_binaries:
+        # ensure cython is installed before trying to build
+        try:
+            import cython
+        except ImportError:
+            raise ImportError('\n\n\nTo build pyacvd please install Cython with:\n\n'
+                              'pip install cython\n\n') from None
+
+
+check_cython()
+
+
 class build_ext(_build_ext):
     """ build class that includes numpy directory """
     def finalize_options(self):
@@ -59,7 +78,7 @@ setup(
     ],
 
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
-    install_requires=['pyvista>=0.23.0',
+    install_requires=['pyvista>=0.30.0',
                       'numpy',
                       'scipy'],
     keywords='vtk uniform meshing remeshing, acvd',
