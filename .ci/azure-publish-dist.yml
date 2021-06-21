@@ -16,6 +16,6 @@ steps:
   displayName: 'Upload to PyPi'
   condition: contains(variables['Build.SourceBranch'], 'refs/tags/')
   env:
-    TWINE_USERNAME: $(twine.username)
-    TWINE_PASSWORD: $(twine.password)
+    TWINE_USERNAME: "__token__"
+    TWINE_PASSWORD: $(twine.token)
     TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
