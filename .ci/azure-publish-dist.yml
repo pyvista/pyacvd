@@ -6,7 +6,6 @@ steps:
   displayName: 'Upload Artifacts'
 
 - script: |
-  inputs:
     pip install twine wheel
     python setup.py sdist
     twine check dist/*
