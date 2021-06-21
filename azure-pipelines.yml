@@ -22,7 +22,7 @@ jobs:
       Python38:
         python.version: '3.8'
   pool:
-    vmImage: 'ubuntu-18.04'
+    vmImage: 'ubuntu-20.04'
   steps:
     - task: UsePythonVersion@0
       inputs:
@@ -55,7 +55,7 @@ jobs:
       Python38:
         python.version: '3.8'
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: 'macOS-10.15'
   steps:
     - script: |
         chmod +x .ci/macos-install-python.sh
@@ -68,7 +68,7 @@ jobs:
 
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmIMage: 'windows-2019'
   variables:
     python.architecture: 'x64'
   strategy:
