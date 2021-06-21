@@ -1,5 +1,12 @@
 name: Unit Testing
 
+on:
+  push:
+    branches: "*"
+    tags: "*"
+  pull_request:
+    branches: "**"
+
 jobs:
   macOS:
     runs-on: macos-latest
