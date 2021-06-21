@@ -23,8 +23,8 @@ class build_ext(_build_ext):
 
 
 def read(*paths):
-    with open(os.path.join(*paths), 'r') as f:
-        return f.read()
+    with open(os.path.join(*paths), 'r') as fid:
+        return fid.read()
 
 
 setup(
@@ -33,7 +33,7 @@ setup(
     version=__version__,
     description='Uniformly remeshes surface meshes',
     long_description=read('README.rst'),
-
+    long_description_content_type='text/x-rst',
     # Cython directives
     cmdclass={'build_ext': build_ext},
     ext_modules=[Extension("pyacvd._clustering",
