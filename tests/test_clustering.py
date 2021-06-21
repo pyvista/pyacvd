@@ -30,7 +30,7 @@ def test_bunny():
 
 
 def test_cylinder():
-    cylinder = pv.Cylinder().tri_filter()
+    cylinder = pv.Cylinder().triangulate()
     # cylinder.clean(inplace=True)
 
     clus = pyacvd.Clustering(cylinder)
@@ -46,7 +46,7 @@ def test_cylinder():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_cow():
     # must be an all triangular mesh to sub-divide
-    cow.tri_filter(inplace=True)
+    cow.triangulate(inplace=True)
 
     # mesh is not dense enough for uniform remeshing
     clus = pyacvd.Clustering(cow)
