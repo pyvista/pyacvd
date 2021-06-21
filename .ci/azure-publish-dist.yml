@@ -7,10 +7,15 @@ steps:
 
 - script: |
     pip install twine wheel
-    twine upload dist/*.whl --skip-existing
+    python setup.py sdist
+    twine check dist/*
+  displayName: 'Build sdist and validate package'
+
+- script: |
+    twine upload dist/* --skip-existing
   displayName: 'Upload to PyPi'
   condition: contains(variables['Build.SourceBranch'], 'refs/tags/')
   env:
-    TWINE_USERNAME: $(twine.username)
-    TWINE_PASSWORD: $(twine.password)
+    TWINE_USERNAME: "__token__"
+    TWINE_PASSWORD: $(twine.token)
     TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
