@@ -33,6 +33,7 @@ jobs:
           pip install dist/*
 
       - name: Install package
+        run: |
           pip install dist/*
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
 
