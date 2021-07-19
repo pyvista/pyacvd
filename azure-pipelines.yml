@@ -21,6 +21,8 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
+      Python39:
+        python.version: '3.9'
   pool:
     vmImage: 'ubuntu-20.04'
   steps:
@@ -56,6 +58,8 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
+      Python39:
+        python.version: '3.9'
   steps:
     - template: .ci/azure-setup.yml
     - template: .ci/azure-steps.yml
