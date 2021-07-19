@@ -13,7 +13,7 @@ jobs:
     name: Mac OS Unit Testing
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8']
+        python-version: ['3.6', '3.7', '3.8', '3.9']
 
     env:
       SHELLOPTS: 'errexit:pipefail'
@@ -51,8 +51,8 @@ jobs:
           twine check dist/*
 
       - name: Upload to PyPi
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+        if: startsWith(github.event.ref, 'refs/tags')
         run: |
-          twine upload -u __token__ --skip-existing dist/scooby*
+          twine upload -u __token__ --skip-existing dist/*
         env:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
