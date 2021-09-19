@@ -78,7 +78,7 @@ setup(
     ],
 
     python_requires='>=3.6.*',
-    install_requires=['pyvista>=0.30.0',
+    install_requires=['pyvista>=0.32.0',
                       'numpy',
                       'scipy'],
     keywords='vtk uniform meshing remeshing, acvd',
