@@ -18,3 +18,9 @@ filterwarnings = [
     "ignore:.*numpy.dtype size changed.*:RuntimeWarning",
     "ignore:.*numpy.ufunc size changed.*:RuntimeWarning"
 ]
+
+[tool.cibuildwheel]
+archs = ["auto64"]  # 64-bit only
+skip = "pp* *musllinux*"  # disable PyPy and musl-based wheels
+test-requires = "pytest"
+test-command = "pytest {project}/tests"
