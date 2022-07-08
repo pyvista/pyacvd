@@ -3,7 +3,8 @@ import os
 from io import open as io_open
 
 from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext as _build_ext
+from Cython.Build import cythonize
+import numpy as np
 
 # Get version from version info
 __version__ = None
@@ -12,39 +13,9 @@ with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
 
-def check_cython():
-    """Check if binaries exist and if not check if Cython is installed"""
-    has_binaries = False
-    for filename in os.listdir('pyacvd'):
-        if '_clustering' in filename:
-            has_binaries = True
-
-    if not has_binaries:
-        # ensure cython is installed before trying to build
-        try:
-            import cython
-        except ImportError:
-            raise ImportError('\n\n\nTo build pyacvd please install Cython with:\n\n'
-                              'pip install cython\n\n') from None
-
-
-check_cython()
-
-
-class build_ext(_build_ext):
-    """ build class that includes numpy directory """
-    def finalize_options(self):
-        _build_ext.finalize_options(self)
-        # Prevent numpy from thinking it is still in its setup process:
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        self.include_dirs.append(numpy.get_include())
-
-
 def read(*paths):
     with open(os.path.join(*paths), 'r') as fid:
         return fid.read()
-
 
 setup(
     name='pyacvd',
@@ -53,12 +24,16 @@ setup(
     description='Uniformly remeshes surface meshes',
     long_description=read('README.rst'),
     long_description_content_type='text/x-rst',
-    # Cython directives
-    cmdclass={'build_ext': build_ext},
-    ext_modules=[Extension("pyacvd._clustering",
-                           ["pyacvd/cython/_clustering.pyx"],
-                           language='c++')],
-
+    ext_modules=cythonize(
+        [
+            Extension(
+                "pyacvd._clustering",
+                ["pyacvd/cython/_clustering.pyx"],
+                language="c++",
+                include_dirs=[np.get_include()],
+            )
+        ]
+    ),
     url='https://github.com/pyvista/pyacvd',
     author='Alex Kaszynski',
     author_email='akascap@gmail.com',
