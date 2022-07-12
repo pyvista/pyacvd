@@ -7,7 +7,7 @@ import pyvista as pv
 from pyacvd import _clustering
 
 
-class Clustering(object):
+class Clustering:
     """Uniform point clustering based on ACVD.
 
     Parameters
@@ -134,7 +134,7 @@ class Clustering(object):
 
         # Normals of original mesh
         self.mesh.compute_normals(cell_normals=False, inplace=True)
-        norm = self.mesh.point_arrays['Normals']
+        norm = self.mesh.point_data['Normals']
 
         # Compute normalized mean cluster normals
         cnorm = np.empty((self.nclus, 3))
@@ -232,7 +232,7 @@ def create_mesh(mesh, area, clusters, cnorm, flipnorm=True):
         tmp_msh.compute_normals(point_normals=False,
                                 inplace=True,
                                 consistent_normals=False)
-        newnorm = tmp_msh.cell_arrays['Normals']
+        newnorm = tmp_msh.cell_data['Normals']
 
         # If the dot is negative, reverse the order of those faces
         agg = (adjcnorm * newnorm).sum(1)  # dot product
