@@ -53,7 +53,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
-    python_requires=">=3.6.*",
+    python_requires=">=3.7.*",
     install_requires=["pyvista>=0.37.0", "numpy", "scipy"],
     keywords="vtk uniform meshing remeshing, acvd",
 )
