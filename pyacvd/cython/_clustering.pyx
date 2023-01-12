@@ -6,16 +6,18 @@
 from libc.math cimport sqrt
 
 import numpy as np
+
 cimport numpy as np
 
-import time
 import ctypes
+import time
 
 from cython.parallel import prange
 
-from libcpp.vector cimport vector
-from libcpp cimport bool as bool_t
 from libc.stdint cimport int64_t
+from libcpp cimport bool as bool_t
+from libcpp.vector cimport vector
+
 ctypedef unsigned char uint8
 
 
@@ -268,7 +270,7 @@ cdef void init_clusters(int [::1] clusters, int [:, ::1] neighbors,
             # reset items
             c_prev = c
             c = 0
-            # swtich indices
+            # switch indices
             if i_items_new == 0:
                 i_items_old = 0
                 i_items_new = 1
@@ -443,7 +445,7 @@ cdef int null_disconnected(int nclus,  int [::1] nneigh,  int [:, ::1] neigh,
             # reset front
             c_prev = c
             c = 0
-            # swtich indices
+            # switch indices
             if i_front_new == 0:
                 i_front_old = 0
                 i_front_new = 1
@@ -710,7 +712,7 @@ def weighted_points_double(double [:, ::1] v, int [:, ::1] f,
                            double [::1] additional_weights, return_weighted=True):
     """
     Returns point weight based on area weight and weighted points.
-    Points are weighted by adjcent area faces.
+    Points are weighted by adjacent area faces.
 
     Parameters
     ----------
@@ -787,7 +789,7 @@ def weighted_points_double(double [:, ::1] v, int [:, ::1] f,
         point2 = f[i, 3]
         farea_l = farea[i]
 
-        # Store the area of the faces adjcent to each point
+        # Store the area of the faces adjacent to each point
         pweight[point0] += farea_l
         pweight[point1] += farea_l
         pweight[point2] += farea_l
@@ -819,7 +821,7 @@ def weighted_points_float(float [:, ::1] v, int [:, ::1] f,
                           double [::1] additional_weights, return_weighted=True):
     """
     Returns point weight based on area weight and weighted points.
-    Points are weighted by adjcent area faces.
+    Points are weighted by adjacent area faces.
 
     Parameters
     ----------
@@ -896,7 +898,7 @@ def weighted_points_float(float [:, ::1] v, int [:, ::1] f,
         point2 = f[i, 3]
         farea_l = farea[i]
 
-        # Store the area of the faces adjcent to each point
+        # Store the area of the faces adjacent to each point
         pweight[point0] += farea_l
         pweight[point1] += farea_l
         pweight[point2] += farea_l
