@@ -1,10 +1,8 @@
-import pytest
-from pyvista.plotting import system_supports_plotting
-from pyvista import examples
-import pyvista as pv
-
 import pyacvd
-
+import pytest
+import pyvista as pv
+from pyvista import examples
+from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
 
@@ -18,7 +16,6 @@ try:
     cow = examples.download_cow()
 except:
     cow = None
-
 
 
 @pytest.mark.skipif(bunny is None, reason="Requires example data")

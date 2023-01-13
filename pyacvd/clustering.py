@@ -1,10 +1,10 @@
 """Point based clustering module"""
 import ctypes
-import numpy as np
-from scipy import sparse
-import pyvista as pv
 
+import numpy as np
 from pyacvd import _clustering
+import pyvista as pv
+from scipy import sparse
 
 
 class Clustering:
@@ -17,7 +17,7 @@ class Clustering:
 
     Examples
     --------
-    Perform a uniform recluster the stanford bunny
+    Perform a uniform recluster of the stanford bunny.
 
     >>> from pyvista import examples
     >>> import pyacvd
@@ -31,7 +31,7 @@ class Clustering:
     def __init__(self, mesh):
         """Check inputs and initializes neighbors"""
         # mesh must be triangular
-        if not mesh.is_all_triangles():
+        if not mesh.is_all_triangles:
             mesh = mesh.triangulate()
 
         self.mesh = mesh.copy()
@@ -47,39 +47,41 @@ class Clustering:
 
     def _update_data(self, weights=None):
         # Compute point weights and weighted points
-        self._area, self._wcent = weighted_points(self.mesh,
-                                                  additional_weights=weights)
+        self._area, self._wcent = weighted_points(self.mesh, additional_weights=weights)
 
         # neighbors and edges
         self._neigh, self._nneigh = neighbors_from_mesh(self.mesh)
         self._edges = _clustering.edge_id(self._neigh, self._nneigh)
 
     def cluster(self, nclus, maxiter=100, debug=False, iso_try=10):
-        """Cluster points """
-        self.clusters, _, self.nclus = _clustering.cluster(self._neigh,
-                                                           self._nneigh,
-                                                           nclus,
-                                                           self._area,
-                                                           self._wcent,
-                                                           self._edges,
-                                                           maxiter, debug,
-                                                           iso_try)
+        """Cluster points"""
+        self.clusters, _, self.nclus = _clustering.cluster(
+            self._neigh,
+            self._nneigh,
+            nclus,
+            self._area,
+            self._wcent,
+            self._edges,
+            maxiter,
+            debug,
+            iso_try,
+        )
 
         return self.clusters
 
     def subdivide(self, nsub):
-        """Perform a linear subdivision of the mesh
+        """Perform a linear subdivision of the mesh.
 
         Parameters
         ----------
         nsub : int
             Number of subdivisions
         """
-        self.mesh.overwrite(_subdivide(self.mesh, nsub))
+        self.mesh.copy_from(_subdivide(self.mesh, nsub))
         self._update_data()
 
     def plot(self, random_color=True, **kwargs):
-        """ Plot clusters if available
+        """Plot clusters if available.
 
         Parameters
         ----------
@@ -95,7 +97,7 @@ class Clustering:
         cpos : list
             Camera position.  See help(pyvista.plot)
         """
-        if not hasattr(self, 'clusters'):
+        if not hasattr(self, "clusters"):
             return self.mesh.plot(**kwargs)
 
         # Setup color
@@ -115,44 +117,47 @@ class Clustering:
         return self.mesh.plot(scalars=colors, rng=rng, **kwargs)
 
     def create_mesh(self, flipnorm=True):
-        """ Generates mesh from clusters """
+        """Generates mesh from clusters"""
         if flipnorm:
             cnorm = self.cluster_norm
         else:
             cnorm = None
 
         # Generate mesh
-        self.remesh = create_mesh(self.mesh, self._area, self.clusters,
-                                  cnorm, flipnorm)
+        self.remesh = create_mesh(self.mesh, self._area, self.clusters, cnorm, flipnorm)
         return self.remesh
 
     @property
     def cluster_norm(self):
-        """ Return cluster norms """
-        if not hasattr(self, 'clusters'):
-            raise Exception('No clusters available')
+        """Return cluster norms"""
+        if not hasattr(self, "clusters"):
+            raise Exception("No clusters available")
 
         # Normals of original mesh
         self.mesh.compute_normals(cell_normals=False, inplace=True)
-        norm = self.mesh.point_data['Normals']
+        norm = self.mesh.point_data["Normals"]
 
         # Compute normalized mean cluster normals
         cnorm = np.empty((self.nclus, 3))
         cnorm[:, 0] = np.bincount(self.clusters, weights=norm[:, 0] * self._area)
         cnorm[:, 1] = np.bincount(self.clusters, weights=norm[:, 1] * self._area)
         cnorm[:, 2] = np.bincount(self.clusters, weights=norm[:, 2] * self._area)
-        weights = ((cnorm * cnorm).sum(1)**0.5).reshape((-1, 1))
+        weights = ((cnorm * cnorm).sum(1) ** 0.5).reshape((-1, 1))
         weights[weights == 0] = 1
         cnorm /= weights
         return cnorm
 
     @property
     def cluster_centroid(self):
-        """ Computes an area normalized value for each cluster """
+        """Computes an area normalized value for each cluster"""
         wval = self.mesh.points * self._area.reshape(-1, 1)
-        cval = np.vstack((np.bincount(self.clusters, weights=wval[:, 0]),
-                          np.bincount(self.clusters, weights=wval[:, 1]),
-                          np.bincount(self.clusters, weights=wval[:, 2])))
+        cval = np.vstack(
+            (
+                np.bincount(self.clusters, weights=wval[:, 0]),
+                np.bincount(self.clusters, weights=wval[:, 1]),
+                np.bincount(self.clusters, weights=wval[:, 2]),
+            )
+        )
         weights = np.bincount(self.clusters, weights=self._area)
         weights[weights == 0] = 1
         cval /= weights
@@ -160,7 +165,7 @@ class Clustering:
 
 
 def cluster_centroid(cent, area, clusters):
-    """ Computes an area normalized centroid for each cluster """
+    """Computes an area normalized centroid for each cluster"""
 
     # Check if null cluster exists
     null_clusters = np.any(clusters == -1)
@@ -172,9 +177,16 @@ def cluster_centroid(cent, area, clusters):
     cweight = np.bincount(clusters, weights=area)
     cweight[cweight == 0] = 1
 
-    cval = np.vstack((np.bincount(clusters, weights=wval[:, 0]),
-                      np.bincount(clusters, weights=wval[:, 1]),
-                      np.bincount(clusters, weights=wval[:, 2]))) / cweight
+    cval = (
+        np.vstack(
+            (
+                np.bincount(clusters, weights=wval[:, 0]),
+                np.bincount(clusters, weights=wval[:, 1]),
+                np.bincount(clusters, weights=wval[:, 2]),
+            )
+        )
+        / cweight
+    )
 
     if null_clusters:
         cval[:, -1] = np.inf
@@ -197,13 +209,13 @@ def create_mesh(mesh, area, clusters, cnorm, flipnorm=True):
     # Compute centroids
     ccent = np.ascontiguousarray(cluster_centroid(points, area, clusters))
 
-    # Create sparse matrix storing the number of adjcent clusters a point has
+    # Create sparse matrix storing the number of adjacent clusters a point has
     rng = np.arange(faces.shape[0]).reshape((-1, 1))
     a = np.hstack((rng, rng, rng)).ravel()
     b = clusters[faces[:, 1:]].ravel()  # take?
-    c = np.ones(len(a), dtype='bool')
+    c = np.ones(len(a), dtype="bool")
 
-    boolmatrix = sparse.csr_matrix((c, (a, b)), dtype='bool')
+    boolmatrix = sparse.csr_matrix((c, (a, b)), dtype="bool")
 
     # Find all points with three neighboring clusters.  Each of the three
     # cluster neighbors becomes a point on a triangle
@@ -229,10 +241,8 @@ def create_mesh(mesh, area, clusters, cnorm, flipnorm=True):
         faces[:, 1:] = f
 
         tmp_msh = pv.PolyData(points, faces.ravel())
-        tmp_msh.compute_normals(point_normals=False,
-                                inplace=True,
-                                consistent_normals=False)
-        newnorm = tmp_msh.cell_data['Normals']
+        tmp_msh.compute_normals(point_normals=False, inplace=True, consistent_normals=False)
+        newnorm = tmp_msh.cell_data["Normals"]
 
         # If the dot is negative, reverse the order of those faces
         agg = (adjcnorm * newnorm).sum(1)  # dot product
@@ -247,16 +257,16 @@ def create_mesh(mesh, area, clusters, cnorm, flipnorm=True):
 
 
 def unique_row_indices(a):
-    """ Indices of unique rows """
-    b = np.ascontiguousarray(a).view(
-        np.dtype((np.void, a.dtype.itemsize * a.shape[1])))
+    """Indices of unique rows"""
+    b = np.ascontiguousarray(a).view(np.dtype((np.void, a.dtype.itemsize * a.shape[1])))
     _, idx = np.unique(b, return_index=True)
     return idx
 
 
 def weighted_points(mesh, return_weighted=True, additional_weights=None):
     """Returns point weight based on area weight and weighted points.
-    Points are weighted by adjcent area faces.
+
+    Points are weighted by adjacent area faces.
 
     Parameters
     ----------
@@ -284,13 +294,13 @@ def weighted_points(mesh, return_weighted=True, additional_weights=None):
     if additional_weights is not None:
         weights = additional_weights
         return_weighted = True
-        if not weights.flags['C_CONTIGUOUS']:
+        if not weights.flags["C_CONTIGUOUS"]:
             weights = np.ascontiguousarray(weights, dtype=ctypes.c_double)
         elif weights.dtype != ctypes.c_double:
             weights = weights.astype(ctypes.c_double)
 
         if (weights < 0).any():
-            raise Exception('Negtive weights not allowed')
+            raise Exception("Negative weights not allowed.")
 
     else:
         weights = np.array([])
