@@ -2,13 +2,14 @@
 requires = [
     "setuptools>=42",
     "wheel>=0.33.0",
-    "cython>=0.29.0",
+    "cython==3.0.5",
     "oldest-supported-numpy"
 ]
 
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
+testpaths = 'tests'
 junit_family= "legacy"
 filterwarnings = [
     # bogus numpy ABI warning (see numpy/#432)
@@ -18,7 +19,7 @@ filterwarnings = [
 
 [tool.cibuildwheel]
 archs = ["auto64"]  # 64-bit only
-skip = "pp* *musllinux*"  # disable PyPy and musl-based wheels
+skip = "cp36-* cp37-* pp* *musllinux*"  # disable PyPy and musl-based wheels\
 test-requires = "pytest"
 test-command = "pytest {project}/tests"
 

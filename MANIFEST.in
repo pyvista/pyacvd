@@ -1,1 +1,2 @@
 exclude pyacvd/cython/_clustering.cpp
+include pyacvd/cython/_clustering.pyx
