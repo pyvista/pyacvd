@@ -241,7 +241,9 @@ def create_mesh(mesh, area, clusters, cnorm, flipnorm=True):
         faces[:, 1:] = f
 
         tmp_msh = pv.PolyData(points, faces.ravel())
-        tmp_msh.compute_normals(point_normals=False, inplace=True, consistent_normals=False)
+        tmp_msh.compute_normals(
+            point_normals=False, inplace=True, consistent_normals=False
+        )
         newnorm = tmp_msh.cell_data["Normals"]
 
         # If the dot is negative, reverse the order of those faces

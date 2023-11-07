@@ -1,1 +1,1 @@
-from pyacvd.clustering import Clustering
+from pyacvd.clustering import Clustering  # noqa: F401
