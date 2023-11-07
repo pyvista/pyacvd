@@ -21,7 +21,7 @@ from libcpp.vector cimport vector
 ctypedef unsigned char uint8
 
 
-def weight_by_neighbors(double [:, ::1] points, int [:, ::1] neigh, 
+def weight_by_neighbors(double [:, ::1] points, int [:, ::1] neigh,
                         int [::1] nneigh):
     """ Computes weights given neighbors """
     cdef int i, j, k, nbr
@@ -66,8 +66,8 @@ def weight_by_neighbors(double [:, ::1] points, int [:, ::1] neigh,
     return np.array(weights), np.array(wvertex)
 
 
-def fast_cluster(int [:, ::1] neighbors, int [::1] nneigh, 
-                 int nclus, double [::1] area, 
+def fast_cluster(int [:, ::1] neighbors, int [::1] nneigh,
+                 int nclus, double [::1] area,
                  double [:, ::1] cent, int [:, ::1] edges):
     """ Python interface function for cluster optimization """
 
@@ -75,13 +75,13 @@ def fast_cluster(int [:, ::1] neighbors, int [::1] nneigh,
     cdef int npoints = nneigh.shape[0]
     cdef int [::1] clusters = np.empty(npoints, ctypes.c_int)
     clusters [:] = -1
-    
+
     cdef int [:, ::1] items = np.empty((2, npoints), ctypes.c_int)
     init_clusters(clusters, neighbors, nneigh, area, nclus, items)
-        
+
     # Eliminat null clusters by growing existing null clusters
     grow_null(edges, clusters)
-    
+
     # Assign any remaining clusters to 0 (just in case null clusters fails)
     for i in range(npoints):
         if clusters[i] == -1:
@@ -91,9 +91,9 @@ def fast_cluster(int [:, ::1] neighbors, int [::1] nneigh,
     return np.asarray(clusters), nclus
 
 
-def cluster(int [:, ::1] neighbors, int [::1] nneigh, 
-            int nclus, double [::1] area, 
-            double [:, ::1] cent, int [:, ::1] edges, int maxiter, 
+def cluster(int [:, ::1] neighbors, int [::1] nneigh,
+            int nclus, double [::1] area,
+            double [:, ::1] cent, int [:, ::1] edges, int maxiter,
             debug=False, int iso_try=10):
     """ Python interface function for cluster optimization """
     cdef int i
@@ -102,7 +102,7 @@ def cluster(int [:, ::1] neighbors, int [::1] nneigh,
     cdef int npoints = nneigh.shape[0]
     cdef int [::1] clusters = np.empty(npoints, ctypes.c_int)
     clusters [:] = -1
-    
+
     cdef int [:, ::1] items = np.empty((2, npoints), ctypes.c_int)
     if debug:
         tstart = time.time()
@@ -112,7 +112,7 @@ def cluster(int [:, ::1] neighbors, int [::1] nneigh,
     if debug:
         print('Clusters initialized')
         print(time.time() - tstart)
-        
+
     # Eliminat null clusters by growing existing null clusters
     if debug:
         tstart = time.time()
@@ -121,35 +121,35 @@ def cluster(int [:, ::1] neighbors, int [::1] nneigh,
     if debug:
         print('Null grown')
         print(time.time() - tstart)
-    
+
     # Assign any remaining clusters to 0 (just in case null clusters fails)
     for i in range(npoints):
         if clusters[i] == -1:
             clusters[i] = 0
-            
+
     # Arrays for cluster centers, masses, and energies
     cdef double [:, ::1] sgamma = np.zeros((nclus, 3))
     cdef double [::1] srho = np.zeros(nclus)
     cdef double [::1] energy = np.empty(nclus)
-        
+
     # Compute initial masses of clusters
     for i in range(npoints):
         srho[clusters[i]] += area[i]
         sgamma[clusters[i], 0] += cent[i, 0]
         sgamma[clusters[i], 1] += cent[i, 1]
         sgamma[clusters[i], 2] += cent[i, 2]
-    
+
     for i in range(nclus):
         energy[i] = (sgamma[i, 0]**2 + \
                      sgamma[i, 1]**2 + \
                      sgamma[i, 2]**2)/srho[i]
-    
+
     if debug:
         print('Energy initialized')
-    
+
     # Count number of clusters
     cdef int [::1] cluscount = np.bincount(clusters).astype(ctypes.c_int)
-    
+
     # Initialize modified array
     cdef uint8 [::1] mod1 = np.empty(nclus, ctypes.c_uint8)
     cdef uint8 [::1] mod2 = np.empty(nclus, ctypes.c_uint8)
@@ -166,7 +166,7 @@ def cluster(int [:, ::1] neighbors, int [::1] nneigh,
         print('Energy Minimized')
         print(time.time() - tstart)
 
-                   
+
     # Identify isolated clusters here
     ndisc = null_disconnected(nclus, nneigh, neighbors, clusters)
     cdef int niter = 0
@@ -194,10 +194,10 @@ def cluster(int [:, ::1] neighbors, int [::1] nneigh,
             print('\tStill {:d} disconnected clusters'.format(ndisc))
 
         niter += 1
-        
+
         if ndisc:
             grow_null(edges, clusters)
-        
+
             # Check again for disconnected clusters
             for i in range(npoints):
                 if clusters[i] == -1:
@@ -229,27 +229,27 @@ cdef void init_clusters(int [::1] clusters, int [:, ::1] neighbors,
                         int [::1] nneigh, double [::1] area, int nclus,
                         int [:, ::1] items) nogil:
     """ Initialize clusters"""
-                               
+
     cdef double tarea, new_area, carea
     cdef int item
     cdef int i, j, k, checkitem, c, c_prev
     cdef double ctarea
     cdef int lstind = 0
     cdef int npoints = area.shape[0]
-    cdef int i_items_new, i_items_old    
-    
+    cdef int i_items_new, i_items_old
+
     # Total mesh size
     cdef double area_remain = 0
     for i in range(npoints):
         area_remain += area[i]
-    
+
     # Assign clsuters
     ctarea = area_remain/nclus
     for i in range(nclus):
         # Get target area and reset current area
         tarea = area_remain - ctarea*(nclus - i - 1)
         carea = 0.0
-        
+
         # Get starting index (the first free face in list)
         i_items_new = 0
         for j in range(lstind, npoints):
@@ -259,14 +259,14 @@ cdef void init_clusters(int [::1] clusters, int [:, ::1] neighbors,
                 clusters[j] = i
                 lstind = j
                 break
-        
+
         if j == npoints:
             break
-        
+
         # While there are new items to be added
         c = 1
         while c:
-            
+
             # reset items
             c_prev = c
             c = 0
@@ -276,15 +276,15 @@ cdef void init_clusters(int [::1] clusters, int [:, ::1] neighbors,
                 i_items_new = 1
             else:
                 i_items_old = 1
-                i_items_new = 0            
-            
-            
+                i_items_new = 0
+
+
             # progressively add neighbors
             for j in range(c_prev):
                 checkitem = items[i_items_old, j]
                 for k in range(nneigh[checkitem]):
                     item = neighbors[checkitem, k]
-                    
+
                     # check if the face is free
                     if clusters[item] == -1:
                         # if allowable, add to cluster
@@ -316,7 +316,7 @@ def edge_id(int [:, ::1] neigh, int [::1] nneigh):
         Unique edges.
     """
     cdef int npoints = neigh.shape[0]
-    cdef int maxnbr = neigh.shape[1]    
+    cdef int maxnbr = neigh.shape[1]
     cdef int i, j, k, ind
 
     # copy neighbor array
@@ -355,7 +355,7 @@ def edge_id(int [:, ::1] neigh, int [::1] nneigh):
 cdef void grow_null(int [:, ::1] edges, int [::1] clusters) nogil:
     """ Grow clusters to include null faces """
     cdef int i
-    cdef int face_a, face_b, clusA, clusB, nchange     
+    cdef int face_a, face_b, clusA, clusB, nchange
 
     nchange = 1
     while nchange > 0:
@@ -366,8 +366,8 @@ cdef void grow_null(int [:, ::1] edges, int [::1] clusters) nogil:
             face_a = edges[i, 0]
             face_b = edges[i, 1]
             clusA = clusters[face_a]
-            clusB = clusters[face_b]        
-    
+            clusB = clusters[face_b]
+
             # Check and immedtialy flip a cluster edge if one is part
             # of the null cluster
             if clusA == -1 and clusB != -1:
@@ -390,7 +390,7 @@ def py_grow_null(int [:, ::1] edges, int [::1] clusters):
             face_a = edges[i, 0]
             face_b = edges[i, 1]
             clusA = clusters[face_a]
-            clusB = clusters[face_b]        
+            clusB = clusters[face_b]
 
             # Check and immedtialy flip a cluster edge if one is part
             # of the null cluster
@@ -401,7 +401,7 @@ def py_grow_null(int [:, ::1] edges, int [::1] clusters):
                 clusters[face_b] = clusA
                 nchange += 1
 
-        
+
 cdef int null_disconnected(int nclus,  int [::1] nneigh,  int [:, ::1] neigh,
                            int [::1] clusters):
     """ Removes isolated clusters """
@@ -426,22 +426,22 @@ cdef int null_disconnected(int nclus,  int [::1] nneigh,  int [:, ::1] neigh,
                 lst_check = i
                 nclus_checked += 1
                 break
-        
+
         # restart if reached the end of points
         if i == npoints - 1:
             break
-        
+
         # store cluster data and check that this has been visited
         cur_clus = clusters[ifound]
         visited[ifound] = 1
         visited_cluster[cur_clus] = 1
-        
+
         # perform front expansion
         i_front_new = 0
         front[i_front_new, 0] = ifound
         c = 1 # dummy init to start while loop
         while c > 0:
-        
+
             # reset front
             c_prev = c
             c = 0
@@ -461,7 +461,7 @@ cdef int null_disconnected(int nclus,  int [::1] nneigh,  int [:, ::1] neigh,
                         front[i_front_new, c] = index
                         c += 1
                         visited[index] = 1
-                        
+
 
     # Finally, null any points that have not been visited
     cdef ndisc = 0
@@ -469,10 +469,10 @@ cdef int null_disconnected(int nclus,  int [::1] nneigh,  int [:, ::1] neigh,
         if not visited[i]:
             clusters[i] = -1
             ndisc += 1
-            
+
     return ndisc
-            
-        
+
+
 def minimize_energy(int [:, ::1] edges, int [::1] clusters, double [::1] area,
                     double [:, ::1] sgamma, double [:, ::1] cent, double [::1] srho,
                     int [::1] cluscount, int maxiter, double [::1] energy,
@@ -482,7 +482,7 @@ def minimize_energy(int [:, ::1] edges, int [::1] clusters, double [::1] area,
     cdef double areaface_a, centA0, centA1, centA2
     cdef double areaface_b, centB0, centB1, centB2
     cdef double eA, eB, eorig, eAwB, eBnB, eAnA, eBwA
-    cdef int nchange = 1   
+    cdef int nchange = 1
     cdef int niter = 0
     cdef int nclus = mod1.shape[0]
     cdef int nedge = edges.shape[0]
@@ -519,12 +519,12 @@ def minimize_energy(int [:, ::1] edges, int [::1] clusters, double [::1] area,
                     areaface_a = area[face_a]
                     centA0 = cent[face_a, 0]
                     centA1 = cent[face_a, 1]
-                    centA2 = cent[face_a, 2]  
+                    centA2 = cent[face_a, 2]
 
                     areaface_b = area[face_b]
                     centB0 = cent[face_b, 0]
                     centB1 = cent[face_b, 1]
-                    centB2 = cent[face_b, 2] 
+                    centB2 = cent[face_b, 2]
 
                     # Current energy
                     eorig =  energy[clusA] + energy[clusB]
@@ -539,7 +539,7 @@ def minimize_energy(int [:, ::1] edges, int [::1] clusters, double [::1] area,
                             (sgamma[clusB, 2] - centB2)**2)/(srho[clusB] - areaface_b)
 
                     eA = eAwB + eBnB
-    
+
                     # Energy with both items assigned to clusterB
                     eAnA = ((sgamma[clusA, 0] - centA0)**2 + \
                             (sgamma[clusA, 1] - centA1)**2 + \
@@ -561,150 +561,150 @@ def minimize_energy(int [:, ::1] edges, int [::1] clusters, double [::1] area,
                         clusters[face_b] = clusA
                         cluscount[clusB] -= 1
                         cluscount[clusA] += 1
-                        
+
                         # Update cluster A mass and centroid
                         srho[clusA] += areaface_b
                         sgamma[clusA, 0] += centB0
                         sgamma[clusA, 1] += centB1
                         sgamma[clusA, 2] += centB2
-                        
+
                         srho[clusB] -= areaface_b
                         sgamma[clusB, 0] -= centB0
                         sgamma[clusB, 1] -= centB1
                         sgamma[clusB, 2] -= centB2
-                        
+
                         # Update cluster energy
                         energy[clusA] = eAwB
                         energy[clusB] = eBnB
 
                     # if the energy contribution of both to B is less than the original and to cluster A
                     elif eB > eorig and eB > eA:
-                        
+
                         # Show clusters as modifies
                         mod2[clusA] = 1
                         mod2[clusB] = 1
                         nchange += 1
-                        
+
                         # reassign
                         clusters[face_a] = clusB
                         cluscount[clusA] -= 1
                         cluscount[clusB] += 1
-                        
+
                         # Add item A to cluster A
                         srho[clusB] += areaface_a
                         sgamma[clusB, 0] += centA0
                         sgamma[clusB, 1] += centA1
                         sgamma[clusB, 2] += centA2
-                        
+
                         # Remove item A from cluster A
                         srho[clusA] -= areaface_a
                         sgamma[clusA, 0] -= centA0
                         sgamma[clusA, 1] -= centA1
                         sgamma[clusA, 2] -= centA2
-                        
+
                         # Update cluster energy
                         energy[clusA] = eAnA
                         energy[clusB] = eBwA
-                                                
+
                 elif cluscount[clusA] > 1:
 
                     areaface_a = area[face_a]
                     centA0 = cent[face_a, 0]
                     centA1 = cent[face_a, 1]
                     centA2 = cent[face_a, 2]
-                    
+
                     # Current energy
                     eorig =  energy[clusA] + energy[clusB]
-                    
+
                     # Energy with both items assigned to clusterB
                     eAnA = ((sgamma[clusA, 0] - centA0)**2 + \
                             (sgamma[clusA, 1] - centA1)**2 + \
                             (sgamma[clusA, 2] - centA2)**2)/(srho[clusA] - areaface_a)
-                           
+
                     eBwA = ((sgamma[clusB, 0] + centA0)**2 + \
                             (sgamma[clusB, 1] + centA1)**2 + \
                             (sgamma[clusB, 2] + centA2)**2)/(srho[clusB] + areaface_a)
-                             
+
                     eB = eAnA + eBwA
-                    
+
                     # Compare energy contributions
                     if eB > eorig:
-                        
+
                         # Flag clusters as modified
                         mod2[clusA] = 1
                         mod2[clusB] = 1
                         nchange += 1
-                        
+
                         # reassign
                         clusters[face_a] = clusB
                         cluscount[clusA] -= 1
                         cluscount[clusB] += 1
-                        
+
                         # Add item A to cluster A
                         srho[clusB] += areaface_a
                         sgamma[clusB, 0] += centA0
                         sgamma[clusB, 1] += centA1
                         sgamma[clusB, 2] += centA2
-                        
+
                         # Remove item A from cluster A
                         srho[clusA] -= areaface_a
                         sgamma[clusA, 0] -= centA0
                         sgamma[clusA, 1] -= centA1
                         sgamma[clusA, 2] -= centA2
-                        
+
                         # Update cluster energy
                         energy[clusA] = eAnA
                         energy[clusB] = eBwA
-                        
-                        
-                elif cluscount[clusB] > 1:                
-                    
+
+
+                elif cluscount[clusB] > 1:
+
                     areaface_b = area[face_b]
                     centB0 = cent[face_b, 0]
                     centB1 = cent[face_b, 1]
-                    centB2 = cent[face_b, 2]  
-                    
+                    centB2 = cent[face_b, 2]
+
                     # Current energy
                     eorig =  energy[clusA] + energy[clusB]
-                    
+
                     # Energy with both items assigned to cluster A
                     eAwB = ((sgamma[clusA, 0] + centB0)**2 + \
                             (sgamma[clusA, 1] + centB1)**2 + \
                             (sgamma[clusA, 2] + centB2)**2)/(srho[clusA] + areaface_b)
-                           
+
                     eBnB = ((sgamma[clusB, 0] - centB0)**2 + \
                             (sgamma[clusB, 1] - centB1)**2 + \
                             (sgamma[clusB, 2] - centB2)**2)/(srho[clusB] - areaface_b)
-                            
+
                     eA = eAwB + eBnB
-    
+
                     # If moving face B reduces cluster energy
                     if eA > eorig:
-                        
+
                         mod2[clusA] = 1
                         mod2[clusB] = 1
-                        
+
                         nchange+=1
                         # reassign
                         clusters[face_b] = clusA
                         cluscount[clusB] -= 1
                         cluscount[clusA] += 1
-                        
+
                         # Update cluster A mass and centroid
                         srho[clusA] += areaface_b
                         sgamma[clusA, 0] += centB0
                         sgamma[clusA, 1] += centB1
                         sgamma[clusA, 2] += centB2
-                        
+
                         srho[clusB] -= areaface_b
                         sgamma[clusB, 0] -= centB0
                         sgamma[clusB, 1] -= centB1
                         sgamma[clusB, 2] -= centB2
-                        
+
                         # Update cluster energy
                         energy[clusA] = eAwB
                         energy[clusB] = eBnB
-                        
+
         niter += 1
 
 
@@ -771,7 +771,7 @@ def weighted_points_double(double [:, ::1] v, int [:, ::1] f,
         e0_0 = v1_0 - v0_0
         e0_1 = v1_1 - v0_1
         e0_2 = v1_2 - v0_2
-        
+
         e1_0 = v2_0 - v0_0
         e1_1 = v2_1 - v0_1
         e1_2 = v2_2 - v0_2
@@ -793,7 +793,7 @@ def weighted_points_double(double [:, ::1] v, int [:, ::1] f,
         pweight[point0] += farea_l
         pweight[point1] += farea_l
         pweight[point2] += farea_l
-        
+
     # Compute weighted vertex
     cdef double wgt
     if return_weighted:
@@ -813,7 +813,7 @@ def weighted_points_double(double [:, ::1] v, int [:, ::1] f,
 
         return np.asarray(pweight), np.asarray(wvertex)
 
-    else: 
+    else:
         return np.asarray(pweight)
 
 
@@ -880,7 +880,7 @@ def weighted_points_float(float [:, ::1] v, int [:, ::1] f,
         e0_0 = v1_0 - v0_0
         e0_1 = v1_1 - v0_1
         e0_2 = v1_2 - v0_2
-        
+
         e1_0 = v2_0 - v0_0
         e1_1 = v2_1 - v0_1
         e1_2 = v2_2 - v0_2
@@ -922,7 +922,7 @@ def weighted_points_float(float [:, ::1] v, int [:, ::1] f,
 
         return np.asarray(pweight), np.asarray(wvertex)
 
-    else: 
+    else:
         return np.asarray(pweight)
 
 
@@ -979,7 +979,7 @@ def partial_cluster(int [:, ::1] neigharr, int [::1] c_ind):
                     elif not ncflag_unmod[newnode] and not edgept[newnode]:
                         edgeclus.push_back(newnode)
                         edgept[newnode] = 1
-                        
+
             testnodes = newtestnodes
 
         # Append to cluster lists
@@ -1065,7 +1065,7 @@ cdef int max_con_face(int npoints, int [:, ::1] f):
     for i in range(nfaces):
         for j in range(1, 4):
             ncon[f[i, j]] += 1
-        
+
     for i in range(npoints):
         if ncon[i] > mxval:
             mxval = ncon[i]
@@ -1074,7 +1074,7 @@ cdef int max_con_face(int npoints, int [:, ::1] f):
 
 
 def subdivision(double [:, ::1] v, int [:, ::1] f):
-    """Subdivide triangles 
+    """Subdivide triangles
 
     Parameters
     ----------
@@ -1101,7 +1101,7 @@ def subdivision(double [:, ::1] v, int [:, ::1] f):
     cdef int vc = nvert
     cdef int fc = 0
     cdef int point0, point1, point2
-    for i in range(nface):    
+    for i in range(nface):
         point0 = f[i, 1]
         point1 = f[i, 2]
         point2 = f[i, 3]
@@ -1134,7 +1134,7 @@ def subdivision(double [:, ::1] v, int [:, ::1] f):
         newf[fc, 3] = vc + 2
         fc += 1
 
-        # New Vertices 
+        # New Vertices
         newv[vc, 0] = (v[point0, 0] + v[point1, 0])*0.5
         newv[vc, 1] = (v[point0, 1] + v[point1, 1])*0.5
         newv[vc, 2] = (v[point0, 2] + v[point1, 2])*0.5
@@ -1145,9 +1145,9 @@ def subdivision(double [:, ::1] v, int [:, ::1] f):
         newv[vc, 2] = (v[point1, 2] + v[point2, 2])*0.5
         vc += 1
 
-        newv[vc, 0] = (v[point0, 0] + v[point2, 0])*0.5    
-        newv[vc, 1] = (v[point0, 1] + v[point2, 1])*0.5    
-        newv[vc, 2] = (v[point0, 2] + v[point2, 2])*0.5    
+        newv[vc, 0] = (v[point0, 0] + v[point2, 0])*0.5
+        newv[vc, 1] = (v[point0, 1] + v[point2, 1])*0.5
+        newv[vc, 2] = (v[point0, 2] + v[point2, 2])*0.5
         vc += 1
 
     # Splice and return

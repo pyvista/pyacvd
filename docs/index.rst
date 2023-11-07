@@ -8,7 +8,7 @@ Installation
 Installation is straightforward using pip::
 
     $ pip install pyacvd
-    
+
 You can also visit `GitHub <https://github.com/akaszynski/pyacvd>`_ to download the latest source and install it running the following from the source directory::
 
     $ pip install .
