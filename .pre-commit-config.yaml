@@ -1,7 +1,7 @@
 repos:
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.11
+  rev: v0.2.2
   hooks:
     - id: ruff
       args: [--fix, --exit-non-zero-on-fix]
@@ -44,6 +44,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.3
+  rev: 0.28.0
   hooks:
     - id: check-github-workflows
