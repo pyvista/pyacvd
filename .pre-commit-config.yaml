@@ -1,22 +1,12 @@
 repos:
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.11
+  rev: v0.2.2
   hooks:
     - id: ruff
       args: [--fix, --exit-non-zero-on-fix]
       exclude: ^(docs/|tests)
     - id: ruff-format
-
-- repo: https://github.com/pycqa/isort
-  rev: 5.13.2
-  hooks:
-  - id: isort
-
-- repo: https://github.com/PyCQA/flake8
-  rev: 7.0.0
-  hooks:
-  - id: flake8
 
 - repo: https://github.com/codespell-project/codespell
   rev: v2.2.6
@@ -44,6 +34,6 @@ repos:
 
 # this validates our github workflow files
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.3
+  rev: 0.28.0
   hooks:
     - id: check-github-workflows
