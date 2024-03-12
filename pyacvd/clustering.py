@@ -1,4 +1,5 @@
 """Point based clustering module"""
+
 import ctypes
 
 import numpy as np
