@@ -1,9 +1,10 @@
 """Setup for pyacvd"""
-from io import open as io_open
-import os
 
-from Cython.Build import cythonize
+import os
+from io import open as io_open
+
 import numpy as np
+from Cython.Build import cythonize
 from setuptools import Extension, setup
 
 # Get version from version info
@@ -54,6 +55,6 @@ setup(
         "Programming Language :: Python :: 3.12",
     ],
     python_requires=">=3.7",
-    install_requires=["pyvista>=0.37.0", "numpy", "scipy"],
+    install_requires=["pyvista>=0.37.0", "numpy"],
     keywords="vtk uniform meshing remeshing, acvd",
 )

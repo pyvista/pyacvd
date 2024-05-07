@@ -1,10 +1,13 @@
 """Point based clustering module"""
+
 import ctypes
 
 import numpy as np
-from pyacvd import _clustering
 import pyvista as pv
-from scipy import sparse
+from pyvista import ID_TYPE
+from vtkmodules.vtkCommonDataModel import vtkCellArray
+
+from pyacvd import _clustering
 
 
 class Clustering:
@@ -131,10 +134,10 @@ class Clustering:
     def cluster_norm(self):
         """Return cluster norms"""
         if not hasattr(self, "clusters"):
-            raise Exception("No clusters available")
+            raise RuntimeError("No clusters available")
 
         # Normals of original mesh
-        self.mesh.compute_normals(cell_normals=False, inplace=True)
+        self.mesh.compute_normals(cell_normals=False, inplace=True, consistent_normals=False)
         norm = self.mesh.point_data["Normals"]
 
         # Compute normalized mean cluster normals
@@ -194,68 +197,95 @@ def cluster_centroid(cent, area, clusters):
     return cval.T
 
 
-def create_mesh(mesh, area, clusters, cnorm, flipnorm=True):
-    """Generates a new mesh given cluster data
+def polydata_from_faces(points: np.ndarray, faces: np.ndarray) -> pv.PolyData:
+    """
+    Generate a polydata from a faces array containing no padding and all triangles.
 
-    moveclus is a boolean flag to move cluster centers to the surface of their
-    corresponding cluster
+    Parameters
+    ----------
+    points : np.ndarray
+        Points array.
+    faces : np.ndarray
+        ``(n, 3)`` faces array.
+
+    Returns
+    -------
+    PolyData
+        New mesh.
 
     """
-    faces = mesh.faces.reshape(-1, 4)
-    points = mesh.points
-    if points.dtype != np.double:
-        points = points.astype(np.double)
+    if faces.ndim != 2:
+        raise ValueError("Expected a two dimensional face array.")
 
-    # Compute centroids
-    ccent = np.ascontiguousarray(cluster_centroid(points, area, clusters))
+    pdata = pv.PolyData()
+    pdata.points = points
 
-    # Create sparse matrix storing the number of adjacent clusters a point has
-    rng = np.arange(faces.shape[0]).reshape((-1, 1))
-    a = np.hstack((rng, rng, rng)).ravel()
-    b = clusters[faces[:, 1:]].ravel()  # take?
-    c = np.ones(len(a), dtype="bool")
+    carr = vtkCellArray()
+    offset = np.arange(0, faces.size + 1, faces.shape[1], dtype=ID_TYPE)
+    carr.SetData(pv.numpy_to_idarr(offset, deep=True), pv.numpy_to_idarr(faces, deep=True))
+    pdata.SetPolys(carr)
+    return pdata
 
-    boolmatrix = sparse.csr_matrix((c, (a, b)), dtype="bool")
 
-    # Find all points with three neighboring clusters.  Each of the three
-    # cluster neighbors becomes a point on a triangle
-    nadjclus = boolmatrix.sum(1)
-    adj = np.array(nadjclus == 3).nonzero()[0]
-    idx = boolmatrix[adj].nonzero()[1]
+def create_mesh(
+    mesh: pv.PolyData,
+    area: np.ndarray,
+    clusters: np.ndarray,
+    cnorm: np.ndarray,
+    flipnorm: bool = True,
+) -> pv.PolyData:
+    """
+    Generate a new mesh given cluster data and other parameters.
 
-    # Append these points and faces
-    points = ccent
-    f = idx.reshape((-1, 3))
+    Parameters
+    ----------
+    mesh : pyvista.PolyData
+        Input mesh object that needs to be reshaped.
+    area : numpy.ndarray
+        An array representing the area of each face of the mesh.
+    clusters : numpy.ndarray
+        An array representing clusters in the mesh.
+    cnorm : numpy.ndarray
+        An array representing the centroids of the clusters.
+    flipnorm : bool, default: True
+        If ``True``, flip the normals of the faces.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Returns a PolyData object representing the new generated mesh.
+
+    """
+    # Cluster centroids
+    ccent = np.ascontiguousarray(cluster_centroid(mesh.points, area, clusters))
+
+    # Include only faces that connect to different clusters
+    faces = mesh._connectivity_array.reshape(-1, 3)
+    f_clus = np.sort(clusters[faces], axis=1)
+    mask = np.all(np.diff(f_clus, axis=1) != 0, axis=1)
+    f = f_clus[mask]
 
     # Remove duplicate faces
-    f = f[unique_row_indices(np.sort(f, 1))]
+    f = f[unique_row_indices(f)]
 
-    # Mean normals of clusters each face is build from
+    # New mesh generated from unique faces built and cluster centroids
+    mesh_out = polydata_from_faces(ccent, f)
+
+    # Reorder faces to be consistent with the original mesh
     if flipnorm:
+        # Mean normals of clusters each face is build from
         adjcnorm = cnorm[f].sum(1)
         adjcnorm /= np.linalg.norm(adjcnorm, axis=1).reshape(-1, 1)
 
-        # and compare this with the normals of each face
-        faces = np.empty((f.shape[0], 4), dtype=f.dtype)
-        faces[:, 0] = 3
-        faces[:, 1:] = f
-
-        tmp_msh = pv.PolyData(points, faces.ravel())
-        tmp_msh.compute_normals(
-            point_normals=False, inplace=True, consistent_normals=False
-        )
-        newnorm = tmp_msh.cell_data["Normals"]
+        newnorm = mesh_out.compute_normals(point_normals=False, consistent_normals=False)["Normals"]
 
         # If the dot is negative, reverse the order of those faces
         agg = (adjcnorm * newnorm).sum(1)  # dot product
         mask = agg < 0.0
-        f[mask] = f[mask, ::-1]
+        f_out = mesh_out._connectivity_array.reshape(-1, 3)
+        f_out[mask] = f_out[mask, ::-1]
 
-    # Create vtk surface
-    triangles = np.empty((f.shape[0], 4), dtype=f.dtype)
-    triangles[:, -3:] = f
-    triangles[:, 0] = 3
-    return pv.PolyData(points, triangles.ravel())
+    return mesh_out
 
 
 def unique_row_indices(a):
