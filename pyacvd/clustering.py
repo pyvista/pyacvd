@@ -134,10 +134,10 @@ class Clustering:
     def cluster_norm(self):
         """Return cluster norms"""
         if not hasattr(self, "clusters"):
-            raise Exception("No clusters available")
+            raise RuntimeError("No clusters available")
 
         # Normals of original mesh
-        self.mesh.compute_normals(cell_normals=False, inplace=True)
+        self.mesh.compute_normals(cell_normals=False, inplace=True, consistent_normals=False)
         norm = self.mesh.point_data["Normals"]
 
         # Compute normalized mean cluster normals
@@ -256,39 +256,36 @@ def create_mesh(
         Returns a PolyData object representing the new generated mesh.
 
     """
+    # Cluster centroids
+    ccent = np.ascontiguousarray(cluster_centroid(mesh.points, area, clusters))
+
+    # Include only faces that connect to different clusters
     faces = mesh._connectivity_array.reshape(-1, 3)
-    points = mesh.points.astype(np.float64, copy=False)
-
-    # Compute centroids
-    ccent = np.ascontiguousarray(cluster_centroid(points, area, clusters))
-
-    # Ignore faces that do not connect to different clusters
     f_clus = np.sort(clusters[faces], axis=1)
     mask = np.all(np.diff(f_clus, axis=1) != 0, axis=1)
     f = f_clus[mask]
 
-    f = f[unique_row_indices(f)]  # Remove duplicate faces
+    # Remove duplicate faces
+    f = f[unique_row_indices(f)]
 
-    # Mean normals of clusters each face is build from
+    # New mesh generated from unique faces built and cluster centroids
+    mesh_out = polydata_from_faces(ccent, f)
+
+    # Reorder faces to be consistent with the original mesh
     if flipnorm:
+        # Mean normals of clusters each face is build from
         adjcnorm = cnorm[f].sum(1)
         adjcnorm /= np.linalg.norm(adjcnorm, axis=1).reshape(-1, 1)
 
-        # and compare this with the normals of each face
-        faces = np.empty((f.shape[0], 4), dtype=f.dtype)
-        faces[:, 0] = 3
-        faces[:, 1:] = f
-
-        tmp_msh = pv.PolyData(points, faces.ravel())
-        tmp_msh.compute_normals(point_normals=False, inplace=True, consistent_normals=False)
-        newnorm = tmp_msh.cell_data["Normals"]
+        newnorm = mesh_out.compute_normals(point_normals=False, consistent_normals=False)["Normals"]
 
         # If the dot is negative, reverse the order of those faces
         agg = (adjcnorm * newnorm).sum(1)  # dot product
         mask = agg < 0.0
-        f[mask] = f[mask, ::-1]
+        f_out = mesh_out._connectivity_array.reshape(-1, 3)
+        f_out[mask] = f_out[mask, ::-1]
 
-    return polydata_from_faces(ccent, f)
+    return mesh_out
 
 
 def unique_row_indices(a):
