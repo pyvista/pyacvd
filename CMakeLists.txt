@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 
 project(nanobind_project LANGUAGES CXX)
-find_package(OpenMP REQUIRED)
+if(NOT APPLE)
+  find_package(OpenMP REQUIRED)
+endif()
 
 # Try to import all Python components potentially needed by nanobind
 find_package(Python 3.9
@@ -38,8 +40,12 @@ if(MSVC)
   # /openmp:llvm
 else()
   # Assuming GCC or Clang
-  target_compile_options(_clustering PRIVATE -O3)
-  #  -fopenmp
+  if (APPLE)
+    target_compile_options(_clustering PRIVATE -O3)
+  else()
+    target_compile_options(_clustering PRIVATE -O3 -fopenmp)
+  endif()
+
 endif()
 
 # Example debugging
