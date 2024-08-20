@@ -12,13 +12,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-14, macos-13]
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.17.0
+      uses: pypa/cibuildwheel@v2.20.0
 
     - uses: actions/upload-artifact@v4
       with:
@@ -61,13 +61,13 @@ jobs:
         mkdir -p dist
         find artifacts -name '*.whl' -exec mv {} dist/ \;
 
-    - uses: pypa/gh-action-pypi-publish@v1.8.11
+    - uses: pypa/gh-action-pypi-publish@v1.9.0
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
 
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         generate_release_notes: true
         files: |
