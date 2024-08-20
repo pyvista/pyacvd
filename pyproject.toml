@@ -39,6 +39,10 @@ test-requires = "pytest"
 archs = ["native"]
 
 [tool.cibuildwheel.macos.environment]
+CC = "/usr/local/opt/llvm/bin/clang"
+CPPFLAGS = "-I/opt/homebrew/opt/libomp/include"
+CXX = "/usr/local/opt/llvm/bin/clang++"
+LDFLAGS = "-L/opt/homebrew/opt/libomp/lib"
 MACOSX_DEPLOYMENT_TARGET = "10.14"  # Needed for full C++17 support on MacOS
 
 [tool.codespell]
