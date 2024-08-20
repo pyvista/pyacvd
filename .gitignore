@@ -2,8 +2,6 @@
 ###################
 *.pyc
 *.pyd
-*.c
-*.cpp
 *.so
 *.o
 
@@ -17,3 +15,6 @@
 pyacvd.egg-info/
 build/
 dist/
+
+# CMake
+CMakeFiles/*
