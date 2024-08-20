@@ -17,6 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install dependencies on macOS
+      if: runner.os == 'macOS'
+      run: |
+        brew install llvm libomp
+
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.20.0
 
