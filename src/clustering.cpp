@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <omp.h>
 #include <vector>
 
 #include <nanobind/nanobind.h>
@@ -12,6 +11,10 @@
 // #include <nanobind/stl/vector.h> // needed to convert c++ vectors to python lists
 
 #include "array_support.h"
+
+#if !defined(__APPLE__)
+#include <omp.h>
+#endif
 
 #if defined(__linux__) || defined(__APPLE__)
 typedef int64_t vtk_int;
