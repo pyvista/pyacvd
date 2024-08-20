@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-14, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
 
     - name: Unit testing
       run: |
-        pip install -r requirements_test.txt
+        pip install pytest
         pytest
 
     - uses: actions/upload-artifact@v4

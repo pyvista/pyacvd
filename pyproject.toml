@@ -36,7 +36,7 @@ test-command = "pytest {project}/tests"
 test-requires = "pytest"
 
 [tool.cibuildwheel.macos]
-archs = ["native"]
+archs = ["universal2"]
 
 [tool.cibuildwheel.macos.environment]
 # CC = "/usr/local/opt/llvm/bin/clang"
