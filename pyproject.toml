@@ -1,38 +1,72 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel>=0.33.0",
-    "cython==3.0.5",
-    "oldest-supported-numpy"
-]
+build-backend = "scikit_build_core.build"
+requires = ["scikit-build-core >=0.4.3", "nanobind >=1.3.2"]
 
-build-backend = "setuptools.build_meta"
-
-[tool.pytest.ini_options]
-testpaths = 'tests'
-junit_family= "legacy"
-filterwarnings = [
-    # bogus numpy ABI warning (see numpy/#432)
-    "ignore:.*numpy.dtype size changed.*:RuntimeWarning",
-    "ignore:.*numpy.ufunc size changed.*:RuntimeWarning"
+[project]
+authors = [
+  {name = "Alex Kaszynski", email = "akascap@gmail.com"}
 ]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
+]
+dependencies = [
+  "numpy",
+  "pyvista>=0.37.0",
+  "pykdtree"
+]
+description = "Uniformly remeshes surface meshes"
+keywords = ["vtk", "uniform", "meshing", "remeshing", "acvd"]
+name = "pyacvd"
+readme = "README.rst"
+requires-python = ">=3.9"
+url = "https://github.com/pyvista/pyacvd"
+version = "0.4.dev0"
 
 [tool.cibuildwheel]
 archs = ["auto64"]  # 64-bit only
-skip = "cp36-* cp37-* pp* *musllinux*"  # disable PyPy and musl-based wheels\
-test-requires = "pytest"
+skip = "cp38-* cp313-* pp* *musllinux*"  # build Python 3.9 - Python 3.13
 test-command = "pytest {project}/tests"
+test-requires = "pytest"
 
 [tool.cibuildwheel.macos]
-# https://cibuildwheel.readthedocs.io/en/stable/faq/#apple-silicon
-archs = ["universal2"]
-test-skip = ["*_arm64", "*_universal2:arm64"]
+archs = ["native"]
+
+[tool.cibuildwheel.macos.environment]
+MACOSX_DEPLOYMENT_TARGET = "10.14"  # Needed for full C++17 support on MacOS
 
 [tool.codespell]
-skip = '*.cxx,*.h,*.gif,*.png,*.jpg,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,./doc/build/*,./doc/images/*,./dist/*,*~,.hypothesis*,*.cpp,*.c'
 quiet-level = 3
+skip = '*.cxx,*.h,*.gif,*.png,*.jpg,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,./doc/build/*,./doc/images/*,./dist/*,*~,.hypothesis*,*.cpp,*.c'
+
+[tool.mypy]
+plugins = ["numpy.typing.mypy_plugin", 'npt_promote']
+# disable_error_code = ['assignment', 'index', 'misc']
+strict = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  # bogus numpy ABI warning (see numpy/#432)
+  "ignore:.*numpy.dtype size changed.*:RuntimeWarning",
+  "ignore:.*numpy.ufunc size changed.*:RuntimeWarning"
+]
+junit_family = "legacy"
+testpaths = 'tests'
 
 [tool.ruff]
 line-length = 100
-# pyflakes, pycodestyle, isort
-select = ["F", "E", "W", "I001"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.scikit-build]
+# Setuptools-style build caching in a local directory
+build-dir = "build/{wheel_tag}"
+minimum-version = "0.4"
+sdist.exclude = [".github", "*.png", "tests", ".mypy_cache", ".pre-commit-config.yaml", "*_cache", "CONTRIBUTING.md", ".gitignore"]

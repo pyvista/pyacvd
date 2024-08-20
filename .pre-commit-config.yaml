@@ -1,26 +1,35 @@
-repos:
+# See https://pre-commit.ci/
+ci:
+  autofix_prs: true
+  autoupdate_schedule: quarterly
 
+repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.4.3
+  rev: v0.6.1
   hooks:
-    - id: ruff
-      args: [--fix, --exit-non-zero-on-fix]
-      exclude: ^(docs/|tests)
-    - id: ruff-format
+  - id: ruff
+    args: [--fix, --exit-non-zero-on-fix]
+    exclude: ^(docs/|tests)
+  - id: ruff-format
+
+- repo: https://github.com/keewis/blackdoc
+  rev: v0.3.9
+  hooks:
+  - id: blackdoc
+    exclude: README.rst
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.2.6
+  rev: v2.3.0
   hooks:
   - id: codespell
-    args: ["--toml", "pyproject.toml"]
-    additional_dependencies: ["tomli"]
+    args: [--skip=*.vt*]
 
-# - repo: https://github.com/pycqa/pydocstyle
-#   rev: 6.1.1
-#   hooks:
-#   - id: pydocstyle
-#     additional_dependencies: [toml]
-#     exclude: "tests/"
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 6.3.0
+  hooks:
+  - id: pydocstyle
+    additional_dependencies: [tomli==2.0.1]
+    files: ^src/stl_reader/.*\.py
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.6.0
@@ -28,12 +37,32 @@ repos:
   - id: check-merge-conflict
   - id: debug-statements
   - id: trailing-whitespace
-  - id: no-commit-to-branch
-    args: [--branch, main]
-  - id: requirements-txt-fixer
 
-# this validates our github workflow files
-- repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.28.3
+# - repo: https://github.com/pre-commit/mirrors-mypy
+#   rev: v1.10.1
+#   hooks:
+#   - id: mypy
+#     additional_dependencies: [numpy>=2.0, npt-promote==0.1]
+
+- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+  rev: v2.14.0
   hooks:
-    - id: check-github-workflows
+  - id: pretty-format-toml
+    args: [--autofix]
+  - id: pretty-format-yaml
+    args: [--autofix, --indent, '2']
+
+- repo: https://github.com/pre-commit/mirrors-clang-format
+  rev: v18.1.4
+  hooks:
+  - id: clang-format
+
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.29.1
+  hooks:
+  - id: check-github-workflows
+
+- repo: https://github.com/dzhu/rstfmt
+  rev: v0.0.14
+  hooks:
+  - id: rstfmt

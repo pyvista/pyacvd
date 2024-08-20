@@ -1,0 +1,57 @@
+[
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_internals.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_internals.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_internals.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_func.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_func.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_func.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_type.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_type.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_type.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_enum.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_enum.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_enum.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_ndarray.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_ndarray.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_ndarray.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_static_property.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_static_property.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/nb_static_property.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/common.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/common.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/common.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/error.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/error.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/error.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/trampoline.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/trampoline.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/trampoline.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++  -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/ext/robin_map/include -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -fno-strict-aliasing -o CMakeFiles/nanobind-static.dir/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/implicit.cpp.o -c /home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/implicit.cpp",
+        "file": "/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/src/implicit.cpp"
+    },
+    {
+        "directory": "/home/alex/source/pyacvd",
+        "command": "/usr/bin/c++ -Dclustering_EXPORTS -I/usr/include/python3.12 -I/home/alex/afrl/python/.venv312/lib/python3.12/site-packages/nanobind/include -isystem /usr/include/c++/11 -isystem /usr/include/x86_64-linux-gnu/c++/11 -isystem /usr/lib/gcc/x86_64-linux-gnu/11/include -fPIC -fvisibility=hidden -O3 -fopenmp -o CMakeFiles/clustering.dir/src/clustering.cpp.o -c /home/alex/source/pyacvd/src/clustering.cpp",
+        "file": "/home/alex/source/pyacvd/src/clustering.cpp"
+    }
+]

@@ -1,0 +1,8 @@
+/home/alex/source/pyacvd/CMakeFiles/clustering.dir
+/home/alex/source/pyacvd/CMakeFiles/nanobind-static.dir
+/home/alex/source/pyacvd/CMakeFiles/edit_cache.dir
+/home/alex/source/pyacvd/CMakeFiles/rebuild_cache.dir
+/home/alex/source/pyacvd/CMakeFiles/list_install_components.dir
+/home/alex/source/pyacvd/CMakeFiles/install.dir
+/home/alex/source/pyacvd/CMakeFiles/install/local.dir
+/home/alex/source/pyacvd/CMakeFiles/install/strip.dir
