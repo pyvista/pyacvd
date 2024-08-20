@@ -27,7 +27,7 @@ name = "pyacvd"
 readme = "README.rst"
 requires-python = ">=3.9"
 url = "https://github.com/pyvista/pyacvd"
-version = "0.4.dev0"
+version = "0.3.0"
 
 [tool.cibuildwheel]
 archs = ["auto64"]  # 64-bit only
