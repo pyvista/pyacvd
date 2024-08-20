@@ -16,5 +16,10 @@ pyacvd.egg-info/
 build/
 dist/
 
-# CMake
-CMakeFiles/*
+# cmake
+#######
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+compile_commands.json
