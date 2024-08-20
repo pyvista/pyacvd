@@ -34,10 +34,12 @@ endif()
 # Compiler-specific options
 if(MSVC)
   # Use MSVC optimization levels and OpenMP setup
-  target_compile_options(_clustering PRIVATE /O2 /std:c++17 /openmp:llvm)
+  target_compile_options(_clustering PRIVATE /O2 /std:c++17)
+  # /openmp:llvm
 else()
   # Assuming GCC or Clang
-  target_compile_options(_clustering PRIVATE -O3 -fopenmp)
+  target_compile_options(_clustering PRIVATE -O3)
+  #  -fopenmp
 endif()
 
 # Example debugging
