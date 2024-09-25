@@ -7,20 +7,8 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
-// #include <nanobind/stl/set.h>    // needed to convert c++ sets to python sets
-// #include <nanobind/stl/vector.h> // needed to convert c++ vectors to python lists
 
 #include "array_support.h"
-
-#if !defined(__APPLE__)
-#include <omp.h>
-#endif
-
-#if defined(__linux__) || defined(__APPLE__)
-typedef int64_t vtk_int;
-#else
-typedef int32_t vtk_int;
-#endif
 
 #ifdef _MSC_VER
 #define restrict __restrict
@@ -99,7 +87,6 @@ PointNormals(NDArray<const T, 2> points_arr, NDArray<const int64_t, 2> faces_arr
     const T *v = points_arr.data();
     const int64_t *f = faces_arr.data();
 
-#pragma omp parallel for
     for (size_t i = 0; i < n_faces; i++) {
         int64_t point0 = f[i * 3 + 0];
         int64_t point1 = f[i * 3 + 1];
@@ -163,7 +150,6 @@ PointNormals(NDArray<const T, 2> points_arr, NDArray<const int64_t, 2> faces_arr
     }
 
     // Normalize point normals
-#pragma omp parallel for
     for (size_t i = 0; i < n_points; i++) {
         T plen = sqrt(
             pnorm[i * 3 + 0] * pnorm[i * 3 + 0] + pnorm[i * 3 + 1] * pnorm[i * 3 + 1] +
@@ -192,7 +178,6 @@ FaceCentroid(const NDArray<const T, 2> points, const NDArray<const int64_t, 2> f
     auto fmean_arr = MakeNDArray<T, 2>({n_faces, 3});
     T *fmean = fmean_arr.data();
 
-#pragma omp parallel for
     for (size_t i = 0; i < n_faces; i++) {
         const int64_t point0 = f[i * 3 + 0];
         const int64_t point1 = f[i * 3 + 1];
@@ -221,7 +206,6 @@ FaceNormals(const NDArray<const T, 2> points, const NDArray<const int64_t, 2> fa
     const T *v = points.data();
     const int64_t *f = faces.data();
 
-#pragma omp parallel for
     for (size_t i = 0; i < n_faces; i++) {
         int64_t point0 = f[i * 3 + 0];
         int64_t point1 = f[i * 3 + 1];
@@ -299,7 +283,6 @@ nb::tuple RayTrace(
     int *near_ind = near_ind_arr.data();
 
     // Loop through each face and determine intersections
-#pragma omp parallel for num_threads(num_threads)
     for (size_t i = 0; i < npoints; i++) {
         T prev_dist = std::numeric_limits<T>::infinity();
         int near_idx = -1;
@@ -516,11 +499,8 @@ nb::tuple PointWeights(
     const T *v = points_arr.data();
     const int64_t *f = faces_arr.data();
 
-#pragma omp parallel num_threads(n_threads)
-    {
-        T *local_pweight = AllocateArray<T>(n_points, true);
+    T *local_pweight = AllocateArray<T>(n_points, true);
 
-#pragma omp for
         for (size_t i = 0; i < n_faces; i++) {
             int64_t point0 = f[i * 3 + 0];
             int64_t point1 = f[i * 3 + 1];
@@ -550,13 +530,11 @@ nb::tuple PointWeights(
         }
 
         delete[] local_pweight;
-    }
 
     // ensure this actually helps
     const T *pweight_const = pweight;
 
     if (n_add_weights) {
-#pragma omp parallel num_threads(n_threads)
         for (size_t i = 0; i < n_points; i++) {
             const T wgt = aweights[i] * pweight_const[i];
             wvertex[i * 3 + 0] = wgt * v[i * 3 + 0];
@@ -564,7 +542,6 @@ nb::tuple PointWeights(
             wvertex[i * 3 + 2] = wgt * v[i * 3 + 2];
         }
     } else {
-#pragma omp parallel num_threads(n_threads)
         for (size_t i = 0; i < n_points; i++) {
             const T wgt = pweight[i];
             wvertex[i * 3 + 0] = wgt * v[i * 3 + 0];
@@ -1315,7 +1292,6 @@ template <typename T> NDArray<T, 1> TriArea(NDArray<T, 2> points, NDArray<int64_
     auto v = points.view();
     auto f = faces.view();
 
-#pragma omp parallel for firstprivate(v, f, tria_view)
     for (size_t i = 0; i < n_faces; i++) {
         int64_t point0 = f(i, 0);
         int64_t point1 = f(i, 1);
