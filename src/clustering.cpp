@@ -524,7 +524,6 @@ nb::tuple PointWeights(
             local_pweight[point2] += farea_l;
         }
 
-#pragma omp critical
         for (size_t i = 0; i < n_points; i++) {
             pweight[i] += local_pweight[i];
         }
