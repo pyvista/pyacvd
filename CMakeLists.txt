@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 
-project(nanobind_project LANGUAGES CXX)
-if(NOT APPLE)
-  find_package(OpenMP REQUIRED)
-endif()
-
 # Try to import all Python components potentially needed by nanobind
 find_package(Python 3.9
   REQUIRED COMPONENTS Interpreter Development.Module
@@ -28,23 +23,14 @@ nanobind_add_module(
   src/clustering.cpp
 )
 
-# Link OpenMP
-if(OpenMP_CXX_FOUND)
-  target_link_libraries(_clustering PRIVATE OpenMP::OpenMP_CXX)
-endif()
 
 # Compiler-specific options
 if(MSVC)
-  # Use MSVC optimization levels and OpenMP setup
-  target_compile_options(_clustering PRIVATE /O2 /std:c++17 /openmp:llvm)
-  # /openmp:llvm
+  # Use MSVC optimization levels
+  target_compile_options(_clustering PRIVATE /O2 /std:c++17)
 else()
   # Assuming GCC or Clang
-  if (APPLE)
-    target_compile_options(_clustering PRIVATE -O3)
-  else()
-    target_compile_options(_clustering PRIVATE -O3 -fopenmp)
-  endif()
+  target_compile_options(_clustering PRIVATE -O3)
 
 endif()
 
