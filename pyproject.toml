@@ -20,7 +20,7 @@ classifiers = [
 dependencies = [
   "numpy",
   "pyvista>=0.37.0",
-  'pykdtree',
+  'pykdtree'
 ]
 description = "Uniformly remeshes surface meshes"
 keywords = ["vtk", "uniform", "meshing", "remeshing", "acvd"]
