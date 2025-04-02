@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.20.0
+      uses: pypa/cibuildwheel@v2.23.2
 
     - uses: actions/upload-artifact@v4
       with:
@@ -34,7 +34,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
         cache: pip
 
     - name: Build sdist
@@ -67,7 +67,7 @@ jobs:
         mkdir -p dist
         find artifacts -name '*.whl' -exec mv {} dist/ \;
 
-    - uses: pypa/gh-action-pypi-publish@v1.9.0
+    - uses: pypa/gh-action-pypi-publish@v1.12.4
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
