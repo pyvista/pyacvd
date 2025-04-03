@@ -1,3 +1,4 @@
+import os
 import pyacvd
 import pytest
 import pyvista as pv
@@ -6,6 +7,10 @@ from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
 
+# skip plotting on windows. This occurs specifically on Python 3.13, skipping
+# all for the time being
+if os.name == "nt":
+    NO_PLOTTING = True
 
 try:
     bunny = examples.download_bunny()

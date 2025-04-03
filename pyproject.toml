@@ -14,12 +14,13 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12"
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
   "numpy",
   "pyvista>=0.37.0",
-  'pykdtree',
+  'pykdtree'
 ]
 description = "Uniformly remeshes surface meshes"
 keywords = ["vtk", "uniform", "meshing", "remeshing", "acvd"]
@@ -29,9 +30,12 @@ requires-python = ">=3.9"
 url = "https://github.com/pyvista/pyacvd"
 version = "0.3.1"
 
+[project.optional-dependencies]
+test = ["pytest"]
+
 [tool.cibuildwheel]
 archs = ["auto64"]  # 64-bit only
-skip = "cp38-* cp313-* pp* *musllinux*"  # build Python 3.9 - Python 3.13
+skip = "cp38-* cp314-* pp* *musllinux*"  # build Python 3.9 - Python 3.13
 test-command = "pytest {project}/tests"
 test-requires = "pytest"
 test-skip = "*-macosx_arm64"
