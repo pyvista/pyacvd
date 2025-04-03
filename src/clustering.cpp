@@ -72,7 +72,6 @@ template <typename T> inline void ArrayAddInplace(T *arr_a, const T *arr_b) noex
     arr_a[2] += arr_b[2];
 }
 
-
 template <typename T>
 NDArray<T, 2>
 PointNormals(NDArray<const T, 2> points_arr, NDArray<const int64_t, 2> faces_arr) {
@@ -167,7 +166,6 @@ PointNormals(NDArray<const T, 2> points_arr, NDArray<const int64_t, 2> faces_arr
     return pnorm_arr;
 }
 
-
 template <typename T>
 NDArray<T, 2>
 FaceCentroid(const NDArray<const T, 2> points, const NDArray<const int64_t, 2> faces) {
@@ -251,7 +249,6 @@ FaceNormals(const NDArray<const T, 2> points, const NDArray<const int64_t, 2> fa
 
     return fnorm_arr;
 }
-
 
 template <typename T>
 nb::tuple RayTrace(
@@ -501,34 +498,34 @@ nb::tuple PointWeights(
 
     T *local_pweight = AllocateArray<T>(n_points, true);
 
-        for (size_t i = 0; i < n_faces; i++) {
-            int64_t point0 = f[i * 3 + 0];
-            int64_t point1 = f[i * 3 + 1];
-            int64_t point2 = f[i * 3 + 2];
+    for (size_t i = 0; i < n_faces; i++) {
+        int64_t point0 = f[i * 3 + 0];
+        int64_t point1 = f[i * 3 + 1];
+        int64_t point2 = f[i * 3 + 2];
 
-            const T *v0 = v + point0 * 3, *v1 = v + point1 * 3, *v2 = v + point2 * 3;
+        const T *v0 = v + point0 * 3, *v1 = v + point1 * 3, *v2 = v + point2 * 3;
 
-            T e0[3] = {v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]};
-            T e1[3] = {v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]};
+        T e0[3] = {v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]};
+        T e1[3] = {v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]};
 
-            T c[3] = {
-                e0[1] * e1[2] - e0[2] * e1[1],
-                e0[2] * e1[0] - e0[0] * e1[2],
-                e0[0] * e1[1] - e0[1] * e1[0]};
+        T c[3] = {
+            e0[1] * e1[2] - e0[2] * e1[1],
+            e0[2] * e1[0] - e0[0] * e1[2],
+            e0[0] * e1[1] - e0[1] * e1[0]};
 
-            T c_len = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-            T farea_l = 0.5 * c_len;
+        T c_len = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+        T farea_l = 0.5 * c_len;
 
-            local_pweight[point0] += farea_l;
-            local_pweight[point1] += farea_l;
-            local_pweight[point2] += farea_l;
-        }
+        local_pweight[point0] += farea_l;
+        local_pweight[point1] += farea_l;
+        local_pweight[point2] += farea_l;
+    }
 
-        for (size_t i = 0; i < n_points; i++) {
-            pweight[i] += local_pweight[i];
-        }
+    for (size_t i = 0; i < n_points; i++) {
+        pweight[i] += local_pweight[i];
+    }
 
-        delete[] local_pweight;
+    delete[] local_pweight;
 
     // ensure this actually helps
     const T *pweight_const = pweight;
@@ -677,7 +674,7 @@ int GrowUnvisited(const int *edges, const int n_edges, int *clusters, bool *visi
     u_edges.reserve(4096);
 
     // Simply assign to adjcent cluster
-    int n_iso = 0;  // number of edges with isolated points
+    int n_iso = 0; // number of edges with isolated points
     for (size_t i = 0; i < n_edges; ++i) {
         point_a = edges[2 * i];
         point_b = edges[2 * i + 1];
@@ -686,17 +683,17 @@ int GrowUnvisited(const int *edges, const int n_edges, int *clusters, bool *visi
 
         if (!visited[point_a] && !visited[point_b]) {
             u_edges.push_back(i);
-            n_iso ++;
+            n_iso++;
         } else {
             if (!visited[point_a] && visited[point_b]) {
                 clusters[point_a] = clus_b;
                 visited[point_a] = true;
-                n_iso ++;
+                n_iso++;
             }
             if (!visited[point_b] && visited[point_a]) {
                 clusters[point_b] = clus_a;
                 visited[point_b] = true;
-                n_iso ++;
+                n_iso++;
             }
         }
     }
@@ -1123,7 +1120,6 @@ bool GrowNull(const int *edges, int n_edges, int *clusters) {
     return !u_edges.empty();
 }
 
-
 // Cluster with minimal optimization. Energy is not minimized and disconnected
 // clusters are not eliminated.
 template <typename T>
@@ -1244,7 +1240,8 @@ nb::tuple Cluster(
         max_iter);
 
     // Attempt to remove all isolated clusters
-    int n_disc = GrowIsolatedClusters(n_clus, n_points, neigh, neigh_off, clusters, edges, n_edges);
+    int n_disc =
+        GrowIsolatedClusters(n_clus, n_points, neigh, neigh_off, clusters, edges, n_edges);
     int n_iter_iso = 0;
     while (n_disc && n_iter_iso < iso_try) {
         MinimizeEnergy(
@@ -1259,7 +1256,8 @@ nb::tuple Cluster(
             n_edges,
             n_points,
             max_iter);
-        n_disc = GrowIsolatedClusters(n_clus, n_points, neigh, neigh_off, clusters, edges, n_edges);
+        n_disc = GrowIsolatedClusters(
+            n_clus, n_points, neigh, neigh_off, clusters, edges, n_edges);
         n_iter_iso++;
     }
 
@@ -1325,7 +1323,6 @@ template <typename T> NDArray<T, 1> TriArea(NDArray<T, 2> points, NDArray<int64_
 
     return tria;
 }
-
 
 template <typename T>
 nb::tuple SubdivideTriangles(
@@ -1423,7 +1420,6 @@ nb::tuple SubdivideTriangles(
     return nb::make_tuple(newv_arr, newf_arr, nsub);
 }
 
-
 NB_MODULE(_clustering, m) {
     m.def("face_normals", &FaceNormals<float>);
     m.def("face_normals", &FaceNormals<double>);
@@ -1452,5 +1448,4 @@ NB_MODULE(_clustering, m) {
 
     m.def("subdivision", &SubdivideTriangles<float>);
     m.def("subdivision", &SubdivideTriangles<double>);
-
 };

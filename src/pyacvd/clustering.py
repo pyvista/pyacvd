@@ -140,10 +140,11 @@ class Clustering:
             )
 
         # Compute point weights and weighted points
-        self.area, self.wcent = point_weights(
-            self.mesh, additional_weights=weights, force_double=True
-        )
+        area, wcent = point_weights(self.mesh, additional_weights=weights, force_double=True)
+        self.area = cast(NDArray_FLOAT64, area)
         self.area[self.area == 0] = 1e-10
+
+        self.wcent = cast(NDArray_FLOAT64, wcent)
 
         # neighbors and edges
         self.neigh, self.neigh_off = _clustering.neighbors_from_trimesh(
@@ -227,6 +228,8 @@ class Clustering:
     def _update_data(self, weights: Optional[NDArray_FLOAT32_64] = None) -> None:
         """Recompute neighbors and weights."""
         # Compute point weights and weighted points
+        if weights is not None:
+            weights = weights.astype(np.float64, copy=False)
         self.area, self.wcent = point_weights(
             self.mesh, additional_weights=weights, force_double=True
         )
@@ -263,7 +266,7 @@ class Clustering:
         if random_color:
             rand_color = np.random.random(self.nclus)
         else:
-            rand_color = np.linspace(0, 1, self.nclus)
+            rand_color = np.linspace(0, 1, self.nclus, dtype=np.float64)
         colors = rand_color[self.clusters]
 
         # Set color range depending if null clusters exist
