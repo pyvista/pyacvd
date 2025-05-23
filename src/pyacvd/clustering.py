@@ -1,7 +1,6 @@
 """Point based clustering module"""
 
 import logging
-import warnings
 from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
@@ -321,9 +320,10 @@ class Clustering:
         cnorm[:, 1] = np.bincount(self.clusters, weights=n[:, 1] * self.area)
         cnorm[:, 2] = np.bincount(self.clusters, weights=n[:, 2] * self.area)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            cnorm /= ((cnorm * cnorm).sum(1) ** 0.5).reshape((-1, 1))
+        # normalize
+        cnorm_weight = ((cnorm * cnorm).sum(1) ** 0.5).reshape(-1, 1)
+        cnorm_weight[cnorm_weight == 0] = 1
+        cnorm /= cnorm_weight
 
         return cnorm
 
