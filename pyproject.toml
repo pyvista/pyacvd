@@ -28,7 +28,7 @@ name = "pyacvd"
 readme = "README.rst"
 requires-python = ">=3.9"
 url = "https://github.com/pyvista/pyacvd"
-version = "0.3.2"
+version = "0.3.3"
 
 [project.optional-dependencies]
 test = ["pytest"]
