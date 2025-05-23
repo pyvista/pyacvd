@@ -277,7 +277,9 @@ class Clustering:
 
         return self.mesh.plot(notebook=False, scalars=colors, rng=rng, **kwargs)
 
-    def create_mesh(self, moveclus: bool = True, flipnorm: bool = True) -> pv.PolyData:
+    def create_mesh(
+        self, moveclus: bool = True, flipnorm: bool = True, clean: bool = True
+    ) -> pv.PolyData:
         """
         Generate mesh from clusters.
 
@@ -288,6 +290,13 @@ class Clustering:
         flipnorm : bool, default: True
             Ensure the normals of the clustered mesh match the normals of the
             original mesh.
+        clean : bool, default: True
+            Clean the mesh. This removes any unused points.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh from clusters.
 
         """
         if self.clusters is None or self.nclus is None:
@@ -303,6 +312,8 @@ class Clustering:
         self.remesh = create_mesh(
             self.mesh, self.area, self.clusters, cnorm, self.nclus, moveclus, flipnorm
         )
+        if clean:
+            self.remesh = self.remesh.clean()
         return self.remesh
 
     @property
