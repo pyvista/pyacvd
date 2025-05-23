@@ -27,8 +27,11 @@ except:
 def test_bunny() -> None:
     clus = pyacvd.Clustering(bunny)
     clus.cluster(5000)
-    remesh = clus.create_mesh()
+    remesh = clus.create_mesh(clean=False)
     assert remesh.n_points == 5000
+
+    remesh = clus.create_mesh(clean=True)
+    assert remesh.n_points == remesh.clean().n_points
 
 
 def test_cylinder() -> None:
