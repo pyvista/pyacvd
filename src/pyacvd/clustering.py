@@ -1,7 +1,6 @@
 """Point based clustering module"""
 
 import logging
-import warnings
 from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import numpy as np
@@ -278,7 +277,9 @@ class Clustering:
 
         return self.mesh.plot(notebook=False, scalars=colors, rng=rng, **kwargs)
 
-    def create_mesh(self, moveclus: bool = True, flipnorm: bool = True) -> pv.PolyData:
+    def create_mesh(
+        self, moveclus: bool = True, flipnorm: bool = True, clean: bool = True
+    ) -> pv.PolyData:
         """
         Generate mesh from clusters.
 
@@ -289,6 +290,13 @@ class Clustering:
         flipnorm : bool, default: True
             Ensure the normals of the clustered mesh match the normals of the
             original mesh.
+        clean : bool, default: True
+            Clean the mesh. This removes any unused points.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh from clusters.
 
         """
         if self.clusters is None or self.nclus is None:
@@ -304,6 +312,8 @@ class Clustering:
         self.remesh = create_mesh(
             self.mesh, self.area, self.clusters, cnorm, self.nclus, moveclus, flipnorm
         )
+        if clean:
+            self.remesh = self.remesh.clean()
         return self.remesh
 
     @property
@@ -321,9 +331,10 @@ class Clustering:
         cnorm[:, 1] = np.bincount(self.clusters, weights=n[:, 1] * self.area)
         cnorm[:, 2] = np.bincount(self.clusters, weights=n[:, 2] * self.area)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            cnorm /= ((cnorm * cnorm).sum(1) ** 0.5).reshape((-1, 1))
+        # normalize
+        cnorm_weight = ((cnorm * cnorm).sum(1) ** 0.5).reshape(-1, 1)
+        cnorm_weight[cnorm_weight == 0] = 1
+        cnorm /= cnorm_weight
 
         return cnorm
 
