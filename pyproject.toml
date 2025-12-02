@@ -20,7 +20,9 @@ classifiers = [
 dependencies = [
   "numpy",
   "pyvista>=0.37.0",
-  'pykdtree'
+  "pykdtree",
+  # VTK < 9.5 doesn't have prebuilt ARM64 wheels
+  "vtk~=9.5 ; sys_platform == 'linux' and platform_machine == 'aarch64'"
 ]
 description = "Uniformly remeshes surface meshes"
 keywords = ["vtk", "uniform", "meshing", "remeshing", "acvd"]
@@ -39,6 +41,10 @@ skip = "cp38-* cp314-* pp* *musllinux*"  # build Python 3.9 - Python 3.13
 test-command = "pytest {project}/tests"
 test-requires = "pytest"
 test-skip = "*-macosx_arm64"
+
+[tool.cibuildwheel.linux]
+# Use manylinux_2_28 for aarch64 to support VTK 9.5 wheels
+manylinux-aarch64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.macos]
 archs = ["native"]
