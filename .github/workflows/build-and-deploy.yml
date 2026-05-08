@@ -44,6 +44,9 @@ jobs:
     - name: Build sdist
       run: pipx run build --sdist
 
+    - name: Verify README renders on PyPI (twine check)
+      run: pipx run twine check --strict dist/*.tar.gz
+
     - name: Install sdist
       run: pip install dist/*.tar.gz
 

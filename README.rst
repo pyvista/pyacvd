@@ -28,7 +28,7 @@ PyVista accessor (recommended, ``pyvista >= 0.48``)
 ===================================================
 
 Installing ``pyacvd`` registers an ``acvd`` namespace on every
-:class:`pyvista.PolyData`, so uniform remeshing slots straight into a
+``pyvista.PolyData``, so uniform remeshing slots straight into a
 PyVista pipeline. Once ``pyacvd`` is imported (or auto-discovered via
 PyVista's entry-point system) you can call ``mesh.acvd.<method>(...)``
 directly:
@@ -51,8 +51,8 @@ The accessor never mutates the source mesh and always returns a fresh
    one-shot uniform remesh.
 
 -  ``mesh.acvd.clustering(weights=None, subdivide=0)`` — return a
-   configured :class:`pyacvd.Clustering` for fine-grained control
-   (plotting clusters, mixing fast/uniform clustering, etc.).
+   configured ``pyacvd.Clustering`` for fine-grained control (plotting
+   clusters, mixing fast/uniform clustering, etc.).
 
 -  ``mesh.acvd.cluster_ids(n_clusters, ...)`` — per-point cluster id
    array, useful for visualization.
