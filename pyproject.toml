@@ -44,10 +44,10 @@ test-requires = "pytest"
 test-skip = "*-macosx_arm64"
 
 [tool.cibuildwheel.linux]
-# Use manylinux_2_28 for aarch64 to support VTK 9.5 wheels
-manylinux-aarch64-image = "manylinux_2_28"
 # Install Xvfb + mesa GL so pyvista plotting tests can render headlessly
 before-test = "dnf install -y xorg-x11-server-Xvfb mesa-libGL mesa-dri-drivers libXrender libXext"
+# Use manylinux_2_28 for aarch64 to support VTK 9.5 wheels
+manylinux-aarch64-image = "manylinux_2_28"
 test-command = "xvfb-run -a pytest {project}/tests"
 
 [tool.cibuildwheel.macos]
