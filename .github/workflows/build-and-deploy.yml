@@ -38,6 +38,11 @@ jobs:
         python-version: '3.14'
         cache: pip
 
+    - name: Install OpenGL/Xvfb for headless plotting
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb libgl1 libglx-mesa0 libxrender1
+
     - name: Build sdist
       run: pipx run build --sdist
 
@@ -47,7 +52,7 @@ jobs:
     - name: Unit testing
       run: |
         pip install pytest
-        pytest
+        xvfb-run -a pytest
 
     - uses: actions/upload-artifact@v6
       with:
