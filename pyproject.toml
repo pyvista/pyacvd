@@ -11,11 +11,11 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
   "Intended Audience :: Science/Research",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13"
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14"
 ]
 dependencies = [
   "numpy",
@@ -28,7 +28,7 @@ description = "Uniformly remeshes surface meshes"
 keywords = ["vtk", "uniform", "meshing", "remeshing", "acvd"]
 name = "pyacvd"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 url = "https://github.com/pyvista/pyacvd"
 version = "0.3.3"
 
@@ -37,14 +37,18 @@ test = ["pytest"]
 
 [tool.cibuildwheel]
 archs = ["auto64"]  # 64-bit only
-skip = "cp38-* cp314-* pp* *musllinux*"  # build Python 3.9 - Python 3.13
+build = "cp310-* cp311-* cp312-* cp313-* cp314-*"  # build 3.10 - 3.14
+skip = "*musllinux*"
 test-command = "pytest {project}/tests"
 test-requires = "pytest"
 test-skip = "*-macosx_arm64"
 
 [tool.cibuildwheel.linux]
+# Install Xvfb + mesa GL so pyvista plotting tests can render headlessly
+before-test = "dnf install -y xorg-x11-server-Xvfb mesa-libGL mesa-dri-drivers libXrender libXext"
 # Use manylinux_2_28 for aarch64 to support VTK 9.5 wheels
 manylinux-aarch64-image = "manylinux_2_28"
+test-command = "xvfb-run -a pytest {project}/tests"
 
 [tool.cibuildwheel.macos]
 archs = ["native"]
