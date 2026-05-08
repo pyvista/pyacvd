@@ -32,6 +32,9 @@ requires-python = ">=3.10"
 url = "https://github.com/pyvista/pyacvd"
 version = "0.4.dev0"
 
+[project.entry-points."pyvista.accessors"]
+acvd = "pyacvd._accessor"
+
 [project.optional-dependencies]
 test = ["pytest"]
 

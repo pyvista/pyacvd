@@ -24,3 +24,8 @@ Makefile
 cmake_install.cmake
 compile_commands.json
 .cache/*
+
+# uv / virtualenvs
+##################
+.venv/
+uv.lock
