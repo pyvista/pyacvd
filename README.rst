@@ -28,10 +28,9 @@ PyVista accessor (recommended, ``pyvista >= 0.48``)
 ===================================================
 
 Installing ``pyacvd`` registers an ``acvd`` namespace on every
-``pyvista.PolyData``, so uniform remeshing slots straight into a
-PyVista pipeline. Once ``pyacvd`` is imported (or auto-discovered via
-PyVista's entry-point system) you can call ``mesh.acvd.<method>(...)``
-directly:
+``pyvista.PolyData``, so uniform remeshing slots straight into a PyVista
+pipeline. Once ``pyacvd`` is imported (or auto-discovered via PyVista's
+entry-point system) you can call ``mesh.acvd.<method>(...)`` directly:
 
 .. code:: python
 
