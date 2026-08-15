@@ -1,6 +1,4 @@
-import ast
 import os
-from pathlib import Path
 
 import numpy as np
 import pyacvd
@@ -12,14 +10,21 @@ from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
 
-try:
-    # pyvista 0.49 rewrote ``CellArray.from_regular_cells`` to use VTK's fixed
-    # size cell storage and to stop widening an int32 connectivity array to the
-    # VTK id type. This constant was added by that change, so its absence means
-    # the installed pyvista still writes an explicit offsets array and upcasts.
-    from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
-except ImportError:
-    _SUPPORTS_FIXED_SIZE_STORAGE = False
+
+def _supports_fixed_size_storage() -> bool:
+    """Return True when pyvista stores regular cells with fixed size storage.
+
+    pyvista 0.49 rewrote ``CellArray.from_regular_cells`` to use VTK's fixed size
+    cell storage, which drops the explicit offsets array and stops widening an
+    int32 connectivity array to the VTK id type. This probes that behaviour rather
+    than a private symbol, which can be renamed without deprecation.
+    """
+    points = np.zeros((3, 3))
+    faces = np.array([[0, 1, 2]], dtype=np.int32)
+    return bool(pv.PolyData.from_regular_faces(points, faces).regular_faces.dtype == np.int32)
+
+
+SUPPORTS_FIXED_SIZE_STORAGE = _supports_fixed_size_storage()
 
 # skip plotting on windows. This occurs specifically on Python 3.13, skipping
 # all for the time being
@@ -77,26 +82,6 @@ def test_cow() -> None:
     assert remesh.n_points
 
 
-def test_no_direct_vtk_import() -> None:
-    """Meshes must be built through pyvista rather than a VTK binding.
-
-    pyvista is not always built on the stock ``vtkmodules`` wheel. A
-    ``vtkCellArray`` from a different binding is a different C++ type and
-    ``vtkPolyData.SetPolys`` rejects it.
-    """
-    tree = ast.parse(Path(clustering.__file__).read_text())
-
-    roots: set[str] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            roots.update(alias.name.split(".")[0] for alias in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-            roots.add(node.module.split(".")[0])
-
-    assert "vtkmodules" not in roots
-    assert "vtk" not in roots
-
-
 def test_polydata_from_faces() -> None:
     points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
     faces = np.array([[0, 1, 2], [0, 2, 3]], dtype=np.int64)
@@ -114,9 +99,13 @@ def test_polydata_from_faces_invalid() -> None:
         clustering.polydata_from_faces(points, np.array([0, 1, 2], dtype=np.int64))
 
 
-@pytest.mark.skipif(not _SUPPORTS_FIXED_SIZE_STORAGE, reason="Requires fixed size cell storage")
+@pytest.mark.skipif(not SUPPORTS_FIXED_SIZE_STORAGE, reason="Requires fixed size cell storage")
 def test_polydata_from_faces_int32() -> None:
-    """An int32 faces array must not be widened to the VTK id type."""
+    """An int32 faces array must not be widened to the VTK id type.
+
+    The probe above uses a shallow copy, so this also covers the ``deep=True``
+    copy that ``polydata_from_faces`` makes.
+    """
     points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
     faces = np.array([[0, 1, 2], [0, 2, 3]], dtype=np.int32)
 
@@ -126,7 +115,7 @@ def test_polydata_from_faces_int32() -> None:
     assert np.array_equal(mesh.regular_faces, faces)
 
 
-@pytest.mark.skipif(not _SUPPORTS_FIXED_SIZE_STORAGE, reason="Requires fixed size cell storage")
+@pytest.mark.skipif(not SUPPORTS_FIXED_SIZE_STORAGE, reason="Requires fixed size cell storage")
 def test_polydata_from_faces_fixed_size_storage() -> None:
     """Triangles are stored without an explicit offsets array."""
     points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
@@ -176,8 +165,29 @@ def test_subdivision_returns_int32() -> None:
 def test_tri_faces_from_poly_too_many_points(monkeypatch: pytest.MonkeyPatch) -> None:
     """A mesh larger than an int32 face index can address must be rejected."""
     mesh = pv.Sphere().triangulate()
-    n_points = clustering.MAX_POINTS + 1
-    monkeypatch.setattr(type(mesh), "n_points", property(lambda self: n_points))
+    monkeypatch.setattr(clustering, "MAX_POINTS", mesh.n_points - 1)
 
-    with pytest.raises(ValueError, match=f"{n_points} points, which exceeds"):
+    with pytest.raises(ValueError, match="exceeds the maximum"):
         clustering._tri_faces_from_poly(mesh)
+
+
+def test_tri_faces_from_poly_empty() -> None:
+    """An empty mesh has no faces rather than being an error."""
+    faces = clustering._tri_faces_from_poly(pv.PolyData())
+    assert faces.shape == (0, 3)
+    assert faces.dtype == np.int32
+
+
+def test_tri_faces_from_poly_quad() -> None:
+    with pytest.raises(ValueError, match="all triangles"):
+        clustering._tri_faces_from_poly(pv.Plane(i_resolution=1, j_resolution=1))
+
+
+def test_tri_faces_from_poly_mixed() -> None:
+    """A mesh of mixed cell types is rejected with the same message as a quad."""
+    points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
+    mixed = pv.PolyData(points, faces=[3, 0, 1, 2, 4, 0, 1, 2, 3])
+    assert mixed.n_cells == 2
+
+    with pytest.raises(ValueError, match="all triangles"):
+        clustering._tri_faces_from_poly(mixed)

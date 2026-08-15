@@ -82,7 +82,14 @@ testpaths = 'tests'
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I"]
+extend-select = ["I", "TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# pyvista is not always built on the stock ``vtkmodules`` wheel. An object from a
+# different binding is a different C++ type and VTK's setters reject it, so build
+# meshes through pyvista's public API instead.
+"vtk".msg = "Use pyvista's public API instead of importing VTK directly."
+"vtkmodules".msg = "Use pyvista's public API instead of importing VTK directly."
 
 [tool.scikit-build]
 # Setuptools-style build caching in a local directory

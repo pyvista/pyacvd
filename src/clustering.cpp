@@ -83,15 +83,14 @@ PointNormals(NDArray<const T, 2> points_arr, NDArray<const int32_t, 2> faces_arr
     auto pnorm_arr = MakeNDArray<T, 2>({n_points, 3}, true);
     T *pnorm = pnorm_arr.data();
 
-    T *fnorm = AllocateArray<T>(n_faces * 3);
+    T *fnorm = AllocateArray<T>(static_cast<size_t>(n_faces) * 3);
     const T *v = points_arr.data();
     const int32_t *f = faces_arr.data();
 
     for (size_t i = 0; i < n_faces; i++) {
-        // Widen to size_t since a point index scaled by three exceeds int32
-        size_t point0 = f[i * 3 + 0];
-        size_t point1 = f[i * 3 + 1];
-        size_t point2 = f[i * 3 + 2];
+        int64_t point0 = f[i * 3 + 0];
+        int64_t point1 = f[i * 3 + 1];
+        int64_t point2 = f[i * 3 + 2];
 
         T v0_0 = v[point0 * 3 + 0];
         T v0_1 = v[point0 * 3 + 1];
@@ -133,9 +132,9 @@ PointNormals(NDArray<const T, 2> points_arr, NDArray<const int32_t, 2> faces_arr
 
     // Sum to pnorm in a single thread to avoid race condition
     for (size_t i = 0; i < n_faces; i++) {
-        size_t point0 = f[i * 3 + 0];
-        size_t point1 = f[i * 3 + 1];
-        size_t point2 = f[i * 3 + 2];
+        int64_t point0 = f[i * 3 + 0];
+        int64_t point1 = f[i * 3 + 1];
+        int64_t point2 = f[i * 3 + 2];
 
         pnorm[point0 * 3 + 0] += fnorm[i * 3 + 0];
         pnorm[point1 * 3 + 0] += fnorm[i * 3 + 0];
@@ -179,10 +178,9 @@ FaceCentroid(const NDArray<const T, 2> points, const NDArray<const int32_t, 2> f
     T *fmean = fmean_arr.data();
 
     for (size_t i = 0; i < n_faces; i++) {
-        // Widen to size_t since a point index scaled by three exceeds int32
-        const size_t point0 = f[i * 3 + 0];
-        const size_t point1 = f[i * 3 + 1];
-        const size_t point2 = f[i * 3 + 2];
+        const int64_t point0 = f[i * 3 + 0];
+        const int64_t point1 = f[i * 3 + 1];
+        const int64_t point2 = f[i * 3 + 2];
 
         fmean[i * 3 + 0] =
             (v[point0 * 3 + 0] + v[point1 * 3 + 0] + v[point2 * 3 + 0]) * VAL_1_3;
@@ -208,10 +206,9 @@ FaceNormals(const NDArray<const T, 2> points, const NDArray<const int32_t, 2> fa
     const int32_t *f = faces.data();
 
     for (size_t i = 0; i < n_faces; i++) {
-        // Widen to size_t since a point index scaled by three exceeds int32
-        size_t point0 = f[i * 3 + 0];
-        size_t point1 = f[i * 3 + 1];
-        size_t point2 = f[i * 3 + 2];
+        int64_t point0 = f[i * 3 + 0];
+        int64_t point1 = f[i * 3 + 1];
+        int64_t point2 = f[i * 3 + 2];
 
         T v0_0 = v[point0 * 3 + 0];
         T v0_1 = v[point0 * 3 + 1];
@@ -303,10 +300,12 @@ nb::tuple RayTrace(
 
             // Compute edges for this triangle. We do this here rather than
             // pre-computing all since we're exiting on the first intersection
-            // Widen to size_t since a point index scaled by three exceeds int32
-            size_t i0 = f[ind * 3 + 0];
-            size_t i1 = f[ind * 3 + 1];
-            size_t i2 = f[ind * 3 + 2];
+            //
+            // ind is a uint32, so scale it in size_t to avoid wrapping
+            const size_t find = static_cast<size_t>(ind) * 3;
+            int64_t i0 = f[find + 0];
+            int64_t i1 = f[find + 1];
+            int64_t i2 = f[find + 2];
 
             T e1[3], e2[3];
             for (int k = 0; k < 3; k++) {
@@ -504,10 +503,9 @@ nb::tuple PointWeights(
     T *local_pweight = AllocateArray<T>(n_points, true);
 
     for (size_t i = 0; i < n_faces; i++) {
-        // Widen to size_t since a point index scaled by three exceeds int32
-        size_t point0 = f[i * 3 + 0];
-        size_t point1 = f[i * 3 + 1];
-        size_t point2 = f[i * 3 + 2];
+        int64_t point0 = f[i * 3 + 0];
+        int64_t point1 = f[i * 3 + 1];
+        int64_t point2 = f[i * 3 + 2];
 
         const T *v0 = v + point0 * 3, *v1 = v + point1 * 3, *v2 = v + point2 * 3;
 
@@ -1296,9 +1294,9 @@ template <typename T> NDArray<T, 1> TriArea(NDArray<T, 2> points, NDArray<int32_
     auto f = faces.view();
 
     for (size_t i = 0; i < n_faces; i++) {
-        int32_t point0 = f(i, 0);
-        int32_t point1 = f(i, 1);
-        int32_t point2 = f(i, 2);
+        int64_t point0 = f(i, 0);
+        int64_t point1 = f(i, 1);
+        int64_t point2 = f(i, 2);
 
         T v0_0 = v(point0, 0);
         T v0_1 = v(point0, 1);
@@ -1334,8 +1332,10 @@ template <typename T>
 nb::tuple SubdivideTriangles(
     const NDArray<T, 2> points, const NDArray<int32_t, 2> faces, const double tgtlen) {
 
-    const int nvert = points.shape(0);
-    const int nface = faces.shape(0);
+    // 64 bit throughout so that neither the count of new faces nor the bound
+    // checked below can overflow before it is tested
+    const int64_t nvert = points.shape(0);
+    const int64_t nface = faces.shape(0);
     auto f = faces.view();
     auto v = points.view();
 
@@ -1343,8 +1343,8 @@ nb::tuple SubdivideTriangles(
     const auto tarea = TriArea(points, faces);
 
     // determine the total number of new faces
-    int nface_new = nface;
-    for (size_t i = 0; i < nface; i++) {
+    int64_t nface_new = nface;
+    for (int64_t i = 0; i < nface; i++) {
         if (tarea(i) > tgtlen) {
             nface_new += 3;
         }
@@ -1353,7 +1353,7 @@ nb::tuple SubdivideTriangles(
     const T *v_data = points.data();
 
     // Face indices are int32, so the subdivided mesh must stay addressable by one
-    const int64_t max_points = static_cast<int64_t>(nvert) + nface_new;
+    const int64_t max_points = nvert + nface_new;
     if (max_points > std::numeric_limits<int32_t>::max()) {
         throw std::overflow_error(
             "Subdivided mesh exceeds the maximum number of points addressable by an "
@@ -1367,15 +1367,14 @@ nb::tuple SubdivideTriangles(
     // copy existing vertex array
     std::copy(v_data, v_data + static_cast<size_t>(nvert) * 3, newv);
 
-    // split triangles into three new ones. Counters are size_t so the offsets
-    // into the new arrays are computed in 64 bit
+    // split triangles into three new ones
     int nsub = 0;
-    size_t fc = 0;
-    size_t vc = nvert;
-    for (size_t i = 0; i < nface; i++) {
-        const int32_t point0 = f(i, 0);
-        const int32_t point1 = f(i, 1);
-        const int32_t point2 = f(i, 2);
+    int64_t fc = 0;
+    int64_t vc = nvert;
+    for (int64_t i = 0; i < nface; i++) {
+        const int64_t point0 = f(i, 0);
+        const int64_t point1 = f(i, 1);
+        const int64_t point2 = f(i, 2);
 
         // Split if triangle length exceeds target area
         if (tarea(i) > tgtlen) {
@@ -1384,19 +1383,19 @@ nb::tuple SubdivideTriangles(
             const int32_t new_point = static_cast<int32_t>(vc);
 
             // Face 0
-            newf[fc * 3 + 0] = point0;
+            newf[fc * 3 + 0] = static_cast<int32_t>(point0);
             newf[fc * 3 + 1] = new_point;
             newf[fc * 3 + 2] = new_point + 2;
             fc += 1;
 
             // Face 1
-            newf[fc * 3 + 0] = point1;
+            newf[fc * 3 + 0] = static_cast<int32_t>(point1);
             newf[fc * 3 + 1] = new_point + 1;
             newf[fc * 3 + 2] = new_point;
             fc += 1;
 
             // Face 2
-            newf[fc * 3 + 0] = point2;
+            newf[fc * 3 + 0] = static_cast<int32_t>(point2);
             newf[fc * 3 + 1] = new_point + 2;
             newf[fc * 3 + 2] = new_point + 1;
             fc += 1;
@@ -1426,9 +1425,9 @@ nb::tuple SubdivideTriangles(
             nsub += 1;
 
         } else {
-            newf[fc * 3 + 0] = point0;
-            newf[fc * 3 + 1] = point1;
-            newf[fc * 3 + 2] = point2;
+            newf[fc * 3 + 0] = static_cast<int32_t>(point0);
+            newf[fc * 3 + 1] = static_cast<int32_t>(point1);
+            newf[fc * 3 + 2] = static_cast<int32_t>(point2);
             fc += 1;
         }
     }

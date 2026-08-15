@@ -77,7 +77,8 @@ def _tri_faces_from_poly(mesh: PolyData) -> NDArray_INT32:
 
     VTK stores the connectivity using its own id type, which is usually int64.
     The C extension indexes points with int32, so the faces are narrowed here
-    and the point count is checked to ensure the indices cannot wrap.
+    and the point count is checked to ensure the indices cannot wrap. Only
+    triangles have a ``(n, 3)`` connectivity, so anything else is rejected.
     """
     if mesh.n_points > MAX_POINTS:
         raise ValueError(
@@ -85,10 +86,15 @@ def _tri_faces_from_poly(mesh: PolyData) -> NDArray_INT32:
             f"{MAX_POINTS} points addressable by an int32 face index."
         )
 
-    faces = mesh.regular_faces
-    if faces.shape[1] != 3:
-        raise ValueError("Input mesh must be composed of all triangles.")
-    return cast(NDArray_INT32, faces.astype(np.int32, copy=False))
+    if mesh.n_cells == 0:
+        return np.empty((0, 3), dtype=np.int32)
+
+    if not mesh.is_all_triangles:
+        raise ValueError(
+            "Input mesh must be composed of all triangles. Hint: `mesh.triangulate` first."
+        )
+
+    return cast(NDArray_INT32, mesh.regular_faces.astype(np.int32, copy=False))
 
 
 def unique_edges(neigh: NDArray_INT32, neigh_off: NDArray_INT32) -> NDArray_INT32:
@@ -434,8 +440,7 @@ def polydata_from_faces(points: NDArray_FLOAT32_64, faces: NDArray_INT32_64) -> 
 
     # Uses pyvista's public constructor rather than building a vtkCellArray here so
     # this works with any VTK binding pyvista is built on. It also stores the cells
-    # without an offsets array where the VTK build supports fixed size storage, and
-    # preserves an int32 faces array instead of widening it to the VTK id type.
+    # without an offsets array where the VTK build supports fixed size storage.
     return PolyData.from_regular_faces(points, faces, deep=True)
 
 
