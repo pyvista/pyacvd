@@ -26,12 +26,15 @@ NDArray_FLOAT64 = NDArray[np.float64]
 NDArray_FLOAT32_64 = Union[NDArray_FLOAT32, NDArray_FLOAT64]
 NDArray_UINT32 = npt.NDArray[np.uint32]
 
-U = TypeVar("U", np.int32, np.int64)
 T = TypeVar("T", np.float32, np.float64)
 
 LOG = logging.getLogger(__name__)
 
 MAX_THREADS = 4
+
+# Face indices are int32 through the C extension, so a mesh cannot have more
+# points than an int32 can address
+MAX_POINTS = int(np.iinfo(np.int32).max)
 
 
 def point_normals(mesh: PolyData) -> NDArray[T]:
@@ -69,12 +72,23 @@ def point_normals(mesh: PolyData) -> NDArray[T]:
     return _clustering.point_normals(mesh.points, _tri_faces_from_poly(mesh))
 
 
-def _tri_faces_from_poly(mesh: PolyData) -> NDArray[U]:
-    """Return the triangle faces from a polydata."""
+def _tri_faces_from_poly(mesh: PolyData) -> NDArray_INT32:
+    """Return the triangle faces from a polydata as int32.
+
+    VTK stores the connectivity using its own id type, which is usually int64.
+    The C extension indexes points with int32, so the faces are narrowed here
+    and the point count is checked to ensure the indices cannot wrap.
+    """
+    if mesh.n_points > MAX_POINTS:
+        raise ValueError(
+            f"Mesh has {mesh.n_points} points, which exceeds the maximum of "
+            f"{MAX_POINTS} points addressable by an int32 face index."
+        )
+
     faces = mesh.regular_faces
     if faces.shape[1] != 3:
         raise ValueError("Input mesh must be composed of all triangles.")
-    return cast(NDArray[U], faces)
+    return cast(NDArray_INT32, faces.astype(np.int32, copy=False))
 
 
 def unique_edges(neigh: NDArray_INT32, neigh_off: NDArray_INT32) -> NDArray_INT32:
@@ -425,7 +439,7 @@ def polydata_from_faces(points: NDArray_FLOAT32_64, faces: NDArray_INT32_64) -> 
     return PolyData.from_regular_faces(points, faces, deep=True)
 
 
-def face_centroid_arrays(points: NDArray[T], faces: NDArray[U]) -> NDArray[T]:
+def face_centroid_arrays(points: NDArray[T], faces: NDArray_INT32) -> NDArray[T]:
     """
     Return the centroid of each face of a triangular mesh.
 
@@ -514,7 +528,7 @@ def ray_trace(
     source_v: NDArray[T],
     source_n: NDArray[T],
     target_v: NDArray[T],
-    target_f: NDArray[U],
+    target_f: NDArray_INT32,
     neigh: NDArray_UINT32,
     no_inf: bool = True,
     num_threads: int = 8,
@@ -547,7 +561,7 @@ def _unique_row_indices(a: Matrix) -> NDArray_INT32_64:
     return idx
 
 
-def face_normals_array(points: NDArray[T], faces: NDArray[U]) -> NDArray[T]:
+def face_normals_array(points: NDArray[T], faces: NDArray_INT32) -> NDArray[T]:
     """
     Return the normals of faces in a mesh or a set of vertices and faces.
 
@@ -686,9 +700,7 @@ def _cluster_centroid(
 
 def _subdivide(mesh: PolyData, nsub: int) -> PolyData:
     """Perform a linear subdivision of a mesh"""
-    new_faces = mesh.faces.reshape(-1, 4)[:, 1:]
-    if new_faces.dtype != np.int32:
-        new_faces = new_faces.astype(np.int32)
+    new_faces = _tri_faces_from_poly(mesh)
 
     new_points = mesh.points
     if new_points.dtype != np.double:

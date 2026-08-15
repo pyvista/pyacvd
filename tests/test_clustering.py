@@ -6,7 +6,7 @@ import numpy as np
 import pyacvd
 import pytest
 import pyvista as pv
-from pyacvd import clustering
+from pyacvd import _clustering, clustering
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
@@ -141,3 +141,43 @@ def test_point_normals_non_triangular() -> None:
     """A non-triangular mesh must be rejected rather than silently misread."""
     with pytest.raises(ValueError, match="all triangles"):
         clustering.point_normals(pv.Plane(i_resolution=2, j_resolution=2))
+
+
+def test_faces_are_int32() -> None:
+    """Faces stay int32 through a full clustering round trip."""
+    clus = pyacvd.Clustering(pv.Sphere().triangulate())
+    assert clustering._tri_faces_from_poly(clus.mesh).dtype == np.int32
+
+    clus.subdivide(2)
+    sub_faces = clustering._tri_faces_from_poly(clus.mesh)
+    assert sub_faces.dtype == np.int32
+    assert np.array_equal(sub_faces, clus.mesh.regular_faces)
+
+    clus.cluster(500)
+    remesh = clus.create_mesh()
+    assert remesh.n_points == 500
+    assert clustering._tri_faces_from_poly(remesh).dtype == np.int32
+
+
+def test_subdivision_returns_int32() -> None:
+    """The subdivision extension returns an int32 faces array."""
+    mesh = pv.Sphere().triangulate()
+    points = mesh.points.astype(np.float64)
+    faces = clustering._tri_faces_from_poly(mesh)
+
+    new_points, new_faces, nsub = _clustering.subdivision(points, faces, 0.0)
+
+    assert new_faces.dtype == np.int32
+    assert nsub == faces.shape[0]
+    assert new_faces.shape == (faces.shape[0] * 4, 3)
+    assert new_faces.max() == new_points.shape[0] - 1
+
+
+def test_tri_faces_from_poly_too_many_points(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A mesh larger than an int32 face index can address must be rejected."""
+    mesh = pv.Sphere().triangulate()
+    n_points = clustering.MAX_POINTS + 1
+    monkeypatch.setattr(type(mesh), "n_points", property(lambda self: n_points))
+
+    with pytest.raises(ValueError, match=f"{n_points} points, which exceeds"):
+        clustering._tri_faces_from_poly(mesh)
