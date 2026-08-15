@@ -19,7 +19,8 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
-  "pyvista>=0.37.0",
+  # 0.42.0 adds PolyData.from_regular_faces and PolyData.regular_faces
+  "pyvista>=0.42.0",
   "pykdtree",
   # VTK < 9.5 doesn't have prebuilt ARM64 wheels
   "vtk~=9.5 ; sys_platform == 'linux' and platform_machine == 'aarch64'"

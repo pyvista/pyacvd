@@ -8,9 +8,7 @@ import numpy.typing as npt
 import pyvista as pv
 from numpy.typing import NDArray
 from pykdtree.kdtree import KDTree
-from pyvista import ID_TYPE
 from pyvista.core.pointset import PolyData
-from vtkmodules.vtkCommonDataModel import vtkCellArray
 
 from pyacvd import _clustering
 
@@ -73,7 +71,7 @@ def point_normals(mesh: PolyData) -> NDArray[T]:
 
 def _tri_faces_from_poly(mesh: PolyData) -> NDArray[U]:
     """Return the triangle faces from a polydata."""
-    return cast(NDArray[U], mesh._connectivity_array.reshape(-1, 3))
+    return cast(NDArray[U], mesh.regular_faces)
 
 
 def unique_edges(neigh: NDArray_INT32, neigh_off: NDArray_INT32) -> NDArray_INT32:
@@ -417,14 +415,11 @@ def polydata_from_faces(points: NDArray_FLOAT32_64, faces: NDArray_INT32_64) -> 
     if faces.ndim != 2:
         raise ValueError("Expected a two dimensional face array.")
 
-    pdata = PolyData()
-    pdata.points = points
-
-    carr = vtkCellArray()
-    offset = np.arange(0, faces.size + 1, faces.shape[1], dtype=ID_TYPE)
-    carr.SetData(pv.numpy_to_idarr(offset, deep=True), pv.numpy_to_idarr(faces, deep=True))
-    pdata.SetPolys(carr)
-    return pdata
+    # Uses pyvista's public constructor rather than building a vtkCellArray here so
+    # this works with any VTK binding pyvista is built on. It also stores the cells
+    # without an offsets array where the VTK build supports fixed size storage, and
+    # preserves an int32 faces array instead of widening it to the VTK id type.
+    return PolyData.from_regular_faces(points, faces, deep=True)
 
 
 def face_centroid_arrays(points: NDArray[T], faces: NDArray[U]) -> NDArray[T]:
@@ -616,7 +611,7 @@ def create_mesh(
     clusters, comparing with the normals of each face, and reversing the order
     if required.  Finally, it creates a new surface using vtk and returns it.
     """
-    faces = mesh._connectivity_array.reshape(-1, 3)
+    faces = mesh.regular_faces
     points = mesh.points.astype(np.float64, copy=False)
 
     # Compute centroids

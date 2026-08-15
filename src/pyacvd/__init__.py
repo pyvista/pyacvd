@@ -10,7 +10,7 @@ except PackageNotFoundError:
 
 # Register the ``acvd`` PyVista accessor on pyvista >= 0.48. The
 # classic ``Clustering`` API works on every supported pyvista version
-# (>= 0.37); the accessor is a thin convenience layer on top and is
+# (>= 0.42); the accessor is a thin convenience layer on top and is
 # silently skipped on older releases.
 import pyvista as _pv
 
