@@ -18,6 +18,9 @@ def _supports_fixed_size_storage() -> bool:
     cell storage, which drops the explicit offsets array and stops widening an
     int32 connectivity array to the VTK id type. This probes that behaviour rather
     than a private symbol, which can be renamed without deprecation.
+
+    Delete this and the two skips it gates once ``pyvista>=0.49`` is the floor in
+    ``pyproject.toml``; the behaviour is unconditional from that release on.
     """
     points = np.zeros((3, 3))
     faces = np.array([[0, 1, 2]], dtype=np.int32)
