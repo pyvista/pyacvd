@@ -135,3 +135,9 @@ def test_polydata_from_faces_fixed_size_storage() -> None:
     mesh = clustering.polydata_from_faces(points, faces)
 
     assert mesh.GetPolys().IsStorageFixedSize()
+
+
+def test_point_normals_non_triangular() -> None:
+    """A non-triangular mesh must be rejected rather than silently misread."""
+    with pytest.raises(ValueError, match="all triangles"):
+        clustering.point_normals(pv.Plane(i_resolution=2, j_resolution=2))

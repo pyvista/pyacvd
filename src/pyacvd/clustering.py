@@ -71,7 +71,10 @@ def point_normals(mesh: PolyData) -> NDArray[T]:
 
 def _tri_faces_from_poly(mesh: PolyData) -> NDArray[U]:
     """Return the triangle faces from a polydata."""
-    return cast(NDArray[U], mesh.regular_faces)
+    faces = mesh.regular_faces
+    if faces.shape[1] != 3:
+        raise ValueError("Input mesh must be composed of all triangles.")
+    return cast(NDArray[U], faces)
 
 
 def unique_edges(neigh: NDArray_INT32, neigh_off: NDArray_INT32) -> NDArray_INT32:
@@ -611,7 +614,7 @@ def create_mesh(
     clusters, comparing with the normals of each face, and reversing the order
     if required.  Finally, it creates a new surface using vtk and returns it.
     """
-    faces = mesh.regular_faces
+    faces = _tri_faces_from_poly(mesh)
     points = mesh.points.astype(np.float64, copy=False)
 
     # Compute centroids
