@@ -10,7 +10,6 @@ NDArray_FLOAT64 = NDArray[np.float64]
 NDArray_FLOAT32_64 = Union[NDArray_FLOAT32, NDArray_FLOAT64]
 
 T = TypeVar("T", np.float32, np.float64)
-U = TypeVar("U", np.int32, np.int64)
 
 def cluster(
     neigh_arr: NDArray_INT32,
@@ -37,19 +36,19 @@ def unique_edges(
 ) -> NDArray_INT32: ...
 def face_normals(
     points: NDArray[T],
-    faces: NDArray[U],
+    faces: NDArray_INT32,
 ) -> NDArray[T]: ...
 def point_normals(
     points: NDArray[T],
-    faces: NDArray[U],
+    faces: NDArray_INT32,
 ) -> NDArray[T]: ...
 def face_centroid(
     points: NDArray[T],
-    faces: NDArray[U],
+    faces: NDArray_INT32,
 ) -> NDArray[T]: ...
 def weighted_points(
     points: NDArray[T],
-    faces: NDArray[U],
+    faces: NDArray_INT32,
     aweights: NDArray[T],
     n_threads: int,
 ) -> Tuple[NDArray[T], NDArray[T]]: ...
@@ -57,7 +56,7 @@ def ray_trace(
     source_pt: NDArray[T],
     source_n: NDArray[T],
     target_v: NDArray[T],
-    target_f: NDArray[U],
+    target_f: NDArray_INT32,
     idx: NDArray_UINT32,
     no_inf: bool,
     num_threads: int,
@@ -66,10 +65,10 @@ def ray_trace(
 ) -> NDArray[T]: ...
 def neighbors_from_trimesh(
     n_points: int,
-    faces: NDArray[U],
+    faces: NDArray_INT32,
 ) -> Tuple[NDArray_INT32, NDArray_INT32]: ...
 def subdivision(
     points: NDArray[T],
-    faces: NDArray[U],
+    faces: NDArray_INT32,
     tgtlen: float,
-) -> Tuple[NDArray_FLOAT64, NDArray[U], int]: ...
+) -> Tuple[NDArray_FLOAT64, NDArray_INT32, int]: ...

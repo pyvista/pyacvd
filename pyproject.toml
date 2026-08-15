@@ -19,7 +19,8 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
-  "pyvista>=0.37.0",
+  # 0.42.0 adds PolyData.from_regular_faces and PolyData.regular_faces
+  "pyvista>=0.42.0",
   "pykdtree",
   # VTK < 9.5 doesn't have prebuilt ARM64 wheels
   "vtk~=9.5 ; sys_platform == 'linux' and platform_machine == 'aarch64'"
@@ -81,7 +82,14 @@ testpaths = 'tests'
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I"]
+extend-select = ["I", "TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# pyvista is not always built on the stock ``vtkmodules`` wheel. An object from a
+# different binding is a different C++ type and VTK's setters reject it, so build
+# meshes through pyvista's public API instead.
+"vtk".msg = "Use pyvista's public API instead of importing VTK directly."
+"vtkmodules".msg = "Use pyvista's public API instead of importing VTK directly."
 
 [tool.scikit-build]
 # Setuptools-style build caching in a local directory

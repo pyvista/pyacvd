@@ -8,9 +8,7 @@ import numpy.typing as npt
 import pyvista as pv
 from numpy.typing import NDArray
 from pykdtree.kdtree import KDTree
-from pyvista import ID_TYPE
 from pyvista.core.pointset import PolyData
-from vtkmodules.vtkCommonDataModel import vtkCellArray
 
 from pyacvd import _clustering
 
@@ -28,12 +26,15 @@ NDArray_FLOAT64 = NDArray[np.float64]
 NDArray_FLOAT32_64 = Union[NDArray_FLOAT32, NDArray_FLOAT64]
 NDArray_UINT32 = npt.NDArray[np.uint32]
 
-U = TypeVar("U", np.int32, np.int64)
 T = TypeVar("T", np.float32, np.float64)
 
 LOG = logging.getLogger(__name__)
 
 MAX_THREADS = 4
+
+# Face indices are int32 through the C extension, so a mesh cannot have more
+# points than an int32 can address
+MAX_POINTS = int(np.iinfo(np.int32).max)
 
 
 def point_normals(mesh: PolyData) -> NDArray[T]:
@@ -71,9 +72,29 @@ def point_normals(mesh: PolyData) -> NDArray[T]:
     return _clustering.point_normals(mesh.points, _tri_faces_from_poly(mesh))
 
 
-def _tri_faces_from_poly(mesh: PolyData) -> NDArray[U]:
-    """Return the triangle faces from a polydata."""
-    return cast(NDArray[U], mesh._connectivity_array.reshape(-1, 3))
+def _tri_faces_from_poly(mesh: PolyData) -> NDArray_INT32:
+    """Return the triangle faces from a polydata as int32.
+
+    VTK stores the connectivity using its own id type, which is usually int64.
+    The C extension indexes points with int32, so the faces are narrowed here
+    and the point count is checked to ensure the indices cannot wrap. Only
+    triangles have a ``(n, 3)`` connectivity, so anything else is rejected.
+    """
+    if mesh.n_points > MAX_POINTS:
+        raise ValueError(
+            f"Mesh has {mesh.n_points} points, which exceeds the maximum of "
+            f"{MAX_POINTS} points addressable by an int32 face index."
+        )
+
+    if mesh.n_cells == 0:
+        return np.empty((0, 3), dtype=np.int32)
+
+    if not mesh.is_all_triangles:
+        raise ValueError(
+            "Input mesh must be composed of all triangles. Hint: `mesh.triangulate` first."
+        )
+
+    return cast(NDArray_INT32, mesh.regular_faces.astype(np.int32, copy=False))
 
 
 def unique_edges(neigh: NDArray_INT32, neigh_off: NDArray_INT32) -> NDArray_INT32:
@@ -417,17 +438,17 @@ def polydata_from_faces(points: NDArray_FLOAT32_64, faces: NDArray_INT32_64) -> 
     if faces.ndim != 2:
         raise ValueError("Expected a two dimensional face array.")
 
-    pdata = PolyData()
-    pdata.points = points
+    # Uses pyvista's public constructor rather than building a vtkCellArray here so
+    # this works with any VTK binding pyvista is built on. It also stores the cells
+    # without an offsets array where the VTK build supports fixed size storage.
+    #
+    # Shallow by default, matching pyvista. VTK holds a reference to the buffers, so
+    # they outlive the caller's arrays; the mesh does alias them, and callers that
+    # reuse an array after passing it here should hand over a copy.
+    return PolyData.from_regular_faces(points, faces)
 
-    carr = vtkCellArray()
-    offset = np.arange(0, faces.size + 1, faces.shape[1], dtype=ID_TYPE)
-    carr.SetData(pv.numpy_to_idarr(offset, deep=True), pv.numpy_to_idarr(faces, deep=True))
-    pdata.SetPolys(carr)
-    return pdata
 
-
-def face_centroid_arrays(points: NDArray[T], faces: NDArray[U]) -> NDArray[T]:
+def face_centroid_arrays(points: NDArray[T], faces: NDArray_INT32) -> NDArray[T]:
     """
     Return the centroid of each face of a triangular mesh.
 
@@ -516,7 +537,7 @@ def ray_trace(
     source_v: NDArray[T],
     source_n: NDArray[T],
     target_v: NDArray[T],
-    target_f: NDArray[U],
+    target_f: NDArray_INT32,
     neigh: NDArray_UINT32,
     no_inf: bool = True,
     num_threads: int = 8,
@@ -549,7 +570,7 @@ def _unique_row_indices(a: Matrix) -> NDArray_INT32_64:
     return idx
 
 
-def face_normals_array(points: NDArray[T], faces: NDArray[U]) -> NDArray[T]:
+def face_normals_array(points: NDArray[T], faces: NDArray_INT32) -> NDArray[T]:
     """
     Return the normals of faces in a mesh or a set of vertices and faces.
 
@@ -616,7 +637,7 @@ def create_mesh(
     clusters, comparing with the normals of each face, and reversing the order
     if required.  Finally, it creates a new surface using vtk and returns it.
     """
-    faces = mesh._connectivity_array.reshape(-1, 3)
+    faces = _tri_faces_from_poly(mesh)
     points = mesh.points.astype(np.float64, copy=False)
 
     # Compute centroids
@@ -688,9 +709,7 @@ def _cluster_centroid(
 
 def _subdivide(mesh: PolyData, nsub: int) -> PolyData:
     """Perform a linear subdivision of a mesh"""
-    new_faces = mesh.faces.reshape(-1, 4)[:, 1:]
-    if new_faces.dtype != np.int32:
-        new_faces = new_faces.astype(np.int32)
+    new_faces = _tri_faces_from_poly(mesh)
 
     new_points = mesh.points
     if new_points.dtype != np.double:
