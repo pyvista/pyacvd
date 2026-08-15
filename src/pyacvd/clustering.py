@@ -36,6 +36,15 @@ MAX_THREADS = 4
 # points than an int32 can address
 MAX_POINTS = int(np.iinfo(np.int32).max)
 
+# Furthest a cluster centroid that already sits on the surface may be projected,
+# as a multiple of the size of the cluster. See ``_runaway_projection``.
+MAX_PROJECTION_RADII = 3.0
+
+# A centroid counts as sitting on the surface when the nearest face centroid is
+# within this fraction of the size of its cluster. Squared, since the distances
+# coming back from the kd-tree are squared.
+SQR_ON_SURFACE_FRACTION = 0.25
+
 
 def point_normals(mesh: PolyData) -> NDArray[T]:
     """
@@ -307,7 +316,10 @@ class Clustering:
         Parameters
         ----------
         moveclus : bool, default: True
-            Move the created points to the surface of the original mesh.
+            Move the created points to the surface of the original mesh. A point
+            that already lies on the surface and would still have to travel more
+            than ``MAX_PROJECTION_RADII`` times the size of its cluster is left
+            at the cluster centroid instead.
         flipnorm : bool, default: True
             Ensure the normals of the clustered mesh match the normals of the
             original mesh.
@@ -616,7 +628,9 @@ def create_mesh(
         The number of clusters.
     moveclus : bool
         A boolean flag to move cluster centers to the surface of their
-        corresponding cluster.
+        corresponding cluster. Centers that already lie on the surface and would
+        still have to travel more than ``MAX_PROJECTION_RADII`` times the size
+        of their cluster are left where they are.
     flipnorm : bool, default: True
         If ``True``, flip the normals of the faces.
 
@@ -649,8 +663,11 @@ def create_mesh(
     if moveclus and cnorm is not None:
         tgt_nbr = min(faces.shape[0] - 1, 1000)
         fcent = face_centroid_arrays(points, faces)
-        _, ind = neighbors(fcent, ccent, tgt_nbr, sqr_dists=True)
+        sqr_dist, ind = neighbors(fcent, ccent, tgt_nbr, sqr_dists=True)
         dist, _ = ray_trace(ccent, cnorm, points, faces, ind, num_threads=MAX_THREADS)
+
+        # Leave centroids whose ray has run away down a hollow where they are
+        dist[_runaway_projection(points, ccent, clusters, dist, sqr_dist)] = 0.0
         ccent += cnorm * dist.reshape((-1, 1))
 
     # Ignore faces that do not connect to different clusters
@@ -675,6 +692,85 @@ def create_mesh(
         f[flip_ind] = f[flip_ind, ::-1]
 
     return polydata_from_faces(v, f)
+
+
+def _runaway_projection(
+    points: NDArray_FLOAT64,
+    ccent: NDArray_FLOAT64,
+    clusters: NDArray_INT32,
+    dist: NDArray_FLOAT32_64,
+    sqr_dist: NDArray_FLOAT32_64,
+) -> npt.NDArray[np.bool_]:
+    """Return which cluster centroids must not be projected onto the surface.
+
+    A centroid is projected by casting a ray along the cluster normal and moving
+    the centroid to the first face it hits. On a hollow part, a centroid that
+    lands over a slot or a corner cut in a wall misses that wall entirely and the
+    ray carries on to hit the far side of the part, dragging the centroid through
+    the material with it (issue #70).
+
+    How far the ray travels is not on its own enough to tell the two apart. On a
+    surface of revolution the clusters come out as rings, and a ring's area
+    weighted centroid sits on the axis with its normal along it, so the ray
+    legitimately runs all the way out to the tip. On
+    ``pyvista.Cone(height=128, resolution=20)`` that is 11.99 times the radius of
+    the cluster, further than any of the runaways below.
+
+    What does tell them apart is where the centroid started. The centroid of the
+    ring above is out on the axis, a full cluster radius clear of any face, and
+    the projection is closing a real gap. The centroid of a runaway is already
+    sitting on the wall its cluster covers, a fraction of the cluster size from
+    the nearest face, and so has nowhere to go. Only refuse the projection when
+    both hold: the nearest face is within ``SQR_ON_SURFACE_FRACTION`` of the
+    cluster size, and the ray travels more than ``MAX_PROJECTION_RADII`` of them.
+
+    Measured across a corpus of 43 meshes (cones and conical holes from
+    ``height=0.5`` to ``128``, cylinders, spheres, tori, an urn, cow, cow head,
+    human, louis, airplane, gears, ant, a room scan, plates and platonics) from
+    10 to 20000 clusters at 0 to 3 subdivisions, the only meshes landing in that
+    corner are the ones that are hollow, plus two clusters on the ant whose rays
+    run 0.03% of its bounding box and so make no odds either way. Both edges are
+    tight and neither holds on its own: the runaways run 3.09 to 9.49 cluster
+    radii where a mesh that is not hollow gets no further than 2.57, and they sit
+    0.16 to 0.46 of a cluster size from the surface where one that is not hollow
+    gets no closer than 0.52.
+
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Points of the mesh being clustered.
+    ccent : numpy.ndarray
+        Cluster centroids.
+    clusters : numpy.ndarray
+        Cluster index of each point.
+    dist : numpy.ndarray
+        Distance the ray cast from each centroid travelled.
+    sqr_dist : numpy.ndarray
+        Squared distances from each cluster centroid to the nearest face
+        centroids, sorted nearest first.
+
+    Returns
+    -------
+    numpy.ndarray
+        ``True`` for each centroid that must be left where it is.
+
+    """
+    if np.any(clusters == -1):
+        clusters = np.where(clusters == -1, clusters.max() + 1, clusters)
+
+    delta = points - ccent[clusters]
+    sqr_radius = np.zeros(ccent.shape[0])
+    np.maximum.at(sqr_radius, clusters, (delta * delta).sum(axis=1))
+
+    # A cluster of a single point has no radius of its own, so fall back on how
+    # far its neighbours are. Reach a few faces out rather than to the first,
+    # which is only about a third of an edge away and next to a sliver less
+    # than that.
+    ring = min(3, sqr_dist.shape[1] - 1)
+    sqr_size = np.maximum(sqr_radius, sqr_dist[:, ring])
+
+    on_surface = sqr_dist[:, 0] < SQR_ON_SURFACE_FRACTION * sqr_size
+    return on_surface & (dist * dist > MAX_PROJECTION_RADII**2 * sqr_size)
 
 
 def _cluster_centroid(
