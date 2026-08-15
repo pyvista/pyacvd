@@ -441,7 +441,11 @@ def polydata_from_faces(points: NDArray_FLOAT32_64, faces: NDArray_INT32_64) -> 
     # Uses pyvista's public constructor rather than building a vtkCellArray here so
     # this works with any VTK binding pyvista is built on. It also stores the cells
     # without an offsets array where the VTK build supports fixed size storage.
-    return PolyData.from_regular_faces(points, faces, deep=True)
+    #
+    # Shallow by default, matching pyvista. VTK holds a reference to the buffers, so
+    # they outlive the caller's arrays; the mesh does alias them, and callers that
+    # reuse an array after passing it here should hand over a copy.
+    return PolyData.from_regular_faces(points, faces)
 
 
 def face_centroid_arrays(points: NDArray[T], faces: NDArray_INT32) -> NDArray[T]:
