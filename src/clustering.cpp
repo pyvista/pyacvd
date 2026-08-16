@@ -10,6 +10,7 @@
 #include <nanobind/ndarray.h>
 
 #include "array_support.h"
+#include "bvh.hpp"
 
 #ifdef _MSC_VER
 #define restrict __restrict
@@ -251,119 +252,53 @@ FaceNormals(const NDArray<const T, 2> points, const NDArray<const int32_t, 2> fa
     return fnorm_arr;
 }
 
+// Move a set of points onto a triangle surface along a set of directions.
+//
+// For each origin/direction pair, returns the signed distance to the nearest
+// intersection with the surface and the index of the face hit. A ray that hits
+// nothing gets a distance of zero and an index of -1, so that a caller applying
+// the distance leaves such a point where it is.
+//
+// ``in_vector`` restricts a ray to travelling forwards along its direction.
+// Otherwise it travels both ways and takes whichever hit is nearest its origin.
 template <typename T>
 nb::tuple RayTrace(
     NDArray<const T, 2> source_pt_arr,
     NDArray<const T, 2> source_n_arr,
     NDArray<const T, 2> v_arr,
     NDArray<const int32_t, 2> f_arr,
-    NDArray<const uint32_t, 2> idx_arr,
-    const bool no_inf,                // true
-    const int num_threads,            // -1
-    const uint32_t out_of_bounds_idx, // 0 or max targets
-    const bool in_vector) {           // false
+    const bool in_vector) {
 
     const T *source_pt = source_pt_arr.data();
     const T *source_n = source_n_arr.data();
-    const T *v = v_arr.data();
-    const int32_t *f = f_arr.data();
-    const uint32_t *idx = idx_arr.data();
 
-    const size_t nfaces = f_arr.shape(0);
+    const int npoints = static_cast<int>(source_pt_arr.shape(0));
+    if (source_n_arr.shape(0) != source_pt_arr.shape(0)) {
+        throw std::runtime_error("Must have one direction per source point");
+    }
 
-    int npoints = source_pt_arr.shape(0);
-    size_t tgt_nbr = idx_arr.shape(1);                  // number of target neighbors
-    auto dists_arr = MakeNDArray<T, 1>({(int)npoints}); // dist to nearest face
-    T *dists = dists_arr.data();
-
-    // Index of the nearest face
+    auto dists_arr = MakeNDArray<T, 1>({npoints});
     auto near_ind_arr = MakeNDArray<int, 1>({npoints});
+    T *dists = dists_arr.data();
     int *near_ind = near_ind_arr.data();
 
-    // Loop through each face and determine intersections
-    for (size_t i = 0; i < npoints; i++) {
-        T prev_dist = std::numeric_limits<T>::infinity();
-        int near_idx = -1;
+    pyacvd_bvh::BVH<T> bvh;
+    pyacvd_bvh::bvh_build(bvh, v_arr.data(), f_arr.data(), static_cast<int>(f_arr.shape(0)));
 
-        T source_n0 = source_n[i * 3 + 0];
-        T source_n1 = source_n[i * 3 + 1];
-        T source_n2 = source_n[i * 3 + 2];
+    for (int i = 0; i < npoints; i++) {
+        const double origin[3] = {
+            static_cast<double>(source_pt[i * 3 + 0]),
+            static_cast<double>(source_pt[i * 3 + 1]),
+            static_cast<double>(source_pt[i * 3 + 2])};
+        const double dir[3] = {
+            static_cast<double>(source_n[i * 3 + 0]),
+            static_cast<double>(source_n[i * 3 + 1]),
+            static_cast<double>(source_n[i * 3 + 2])};
 
-        T source_p0 = source_pt[i * 3 + 0];
-        T source_p1 = source_pt[i * 3 + 1];
-        T source_p2 = source_pt[i * 3 + 2];
-
-        for (size_t j = 0; j < tgt_nbr; ++j) {
-            uint32_t ind = idx[i * tgt_nbr + j];
-            if (UNLIKELY(out_of_bounds_idx && out_of_bounds_idx == ind))
-                break;
-
-            // Compute edges for this triangle. We do this here rather than
-            // pre-computing all since we're exiting on the first intersection
-            //
-            // ind is a uint32, so scale it in size_t to avoid wrapping
-            const size_t find = static_cast<size_t>(ind) * 3;
-            int64_t i0 = f[find + 0];
-            int64_t i1 = f[find + 1];
-            int64_t i2 = f[find + 2];
-
-            T e1[3], e2[3];
-            for (int k = 0; k < 3; k++) {
-                T vertex = v[i0 * 3 + k];
-                e1[k] = v[i1 * 3 + k] - vertex;
-                e2[k] = v[i2 * 3 + k] - vertex;
-            }
-
-            // calculate the determinant
-            T p0 = source_n1 * e2[2] - source_n2 * e2[1];
-            T p1 = source_n2 * e2[0] - source_n0 * e2[2];
-            T p2 = source_n0 * e2[1] - source_n1 * e2[0];
-
-            T det = e1[0] * p0 + e1[1] * p1 + e1[2] * p2;
-            if (UNLIKELY(std::abs(det) < EPSILON))
-                continue;
-            T inv_det = 1.0 / det;
-
-            T t0 = source_p0 - v[i0 * 3 + 0];
-            T t1 = source_p1 - v[i0 * 3 + 1];
-            T t2 = source_p2 - v[i0 * 3 + 2];
-
-            T u = (t0 * p0 + t1 * p1 + t2 * p2) * inv_det;
-            if (u < -EPSILON || u > 1.0 + EPSILON)
-                continue;
-
-            T q0 = t1 * e1[2] - t2 * e1[1];
-            T q1 = t2 * e1[0] - t0 * e1[2];
-            T q2 = t0 * e1[1] - t1 * e1[0];
-            T vtest = (source_n0 * q0 + source_n1 * q1 + source_n2 * q2) * inv_det;
-            if (vtest < -EPSILON || u + vtest > 1.0 + EPSILON)
-                continue;
-
-            if (u + vtest < 1.0 + EPSILON) {
-                T dist = (e2[0] * q0 + e2[1] * q1 + e2[2] * q2) * inv_det;
-                if (in_vector) {
-                    if (dist > 0.0 && dist < prev_dist) {
-                        prev_dist = dist;
-                        near_idx = ind;
-                        break; // exit on first intersection
-                    }
-                } else {
-                    if (std::abs(dist) < std::abs(prev_dist)) {
-                        prev_dist = dist;
-                        near_idx = ind;
-                        break; // exit on first intersection
-                    }
-                }
-            }
-        }
-
-        if (no_inf && near_idx == -1) { // no intersection and no inf
-            dists[i] = 0.0;
-            near_ind[i] = near_idx;
-        } else {
-            dists[i] = prev_dist;
-            near_ind[i] = near_idx;
-        }
+        double t;
+        const int hit = pyacvd_bvh::bvh_trace_ray(bvh, origin, dir, in_vector, t);
+        dists[i] = (hit == -1) ? T(0.0) : static_cast<T>(t);
+        near_ind[i] = hit;
     }
 
     return nb::make_tuple(dists_arr, near_ind_arr);

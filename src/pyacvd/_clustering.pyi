@@ -57,12 +57,8 @@ def ray_trace(
     source_n: NDArray[T],
     target_v: NDArray[T],
     target_f: NDArray_INT32,
-    idx: NDArray_UINT32,
-    no_inf: bool,
-    num_threads: int,
-    out_of_bounds_idx: int,
     in_vector: bool,
-) -> NDArray[T]: ...
+) -> Tuple[NDArray[T], NDArray_INT32]: ...
 def neighbors_from_trimesh(
     n_points: int,
     faces: NDArray_INT32,
