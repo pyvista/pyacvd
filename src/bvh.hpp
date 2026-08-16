@@ -35,8 +35,14 @@ static constexpr int BVH_LEAF_SIZE = 128;
 // at every level, so depth stays under 64 for face counts an int can hold.
 static constexpr int BVH_STACK_SIZE = 128;
 
-// Rejects rays within rounding of parallel to a triangle's plane.
-static constexpr double BVH_DET_EPS = 1e-6;
+// Rejects rays within rounding of parallel to a triangle's plane. The
+// Moller-Trumbore determinant is ``d . (e1 x e2)``, so for a unit direction it
+// is the sine of the angle between the ray and the plane times twice the area
+// of the triangle. Comparing it against a fixed number therefore rejects every
+// small triangle whatever the angle: at 1e-6 that is 99.7% of the faces of the
+// Stanford bunny subdivided once, whose rays then hit nothing at all. Divide
+// the area back out and the test measures the angle alone, in any unit.
+static constexpr double BVH_DET_EPS = 1e-9;
 
 // Barycentric slack, so a ray passing exactly along a shared edge hits one of
 // the two faces rather than slipping between them.
@@ -65,6 +71,10 @@ template <typename T> struct BVH {
     std::vector<double> tri_bmax;
     std::vector<double> tri_centroid;
 
+    // Squared area scale of each face, ``|e1 x e2|^2``, which the determinant
+    // is measured against
+    std::vector<double> tri_sqr_scale;
+
     // Borrowed. The caller keeps the arrays alive for the lifetime of the tree.
     const T *vertices = nullptr;
     const int32_t *faces = nullptr;
@@ -88,6 +98,20 @@ template <typename T> inline void compute_tri_aabbs(BVH<T> &bvh) {
             bvh.tri_bmax[i * 3 + k] = std::max(a, std::max(b, c));
             bvh.tri_centroid[i * 3 + k] = (a + b + c) * (1.0 / 3.0);
         }
+
+        const double e1[3] = {
+            double(v[i1 * 3 + 0]) - double(v[i0 * 3 + 0]),
+            double(v[i1 * 3 + 1]) - double(v[i0 * 3 + 1]),
+            double(v[i1 * 3 + 2]) - double(v[i0 * 3 + 2])};
+        const double e2[3] = {
+            double(v[i2 * 3 + 0]) - double(v[i0 * 3 + 0]),
+            double(v[i2 * 3 + 1]) - double(v[i0 * 3 + 1]),
+            double(v[i2 * 3 + 2]) - double(v[i0 * 3 + 2])};
+        const double n[3] = {
+            e1[1] * e2[2] - e1[2] * e2[1],
+            e1[2] * e2[0] - e1[0] * e2[2],
+            e1[0] * e2[1] - e1[1] * e2[0]};
+        bvh.tri_sqr_scale[i] = n[0] * n[0] + n[1] * n[1] + n[2] * n[2];
     }
 }
 
@@ -106,6 +130,7 @@ inline void bvh_build(BVH<T> &bvh, const T *vertices, const int32_t *faces, int 
     bvh.tri_bmin.assign(static_cast<size_t>(nfaces) * 3, 0.0);
     bvh.tri_bmax.assign(static_cast<size_t>(nfaces) * 3, 0.0);
     bvh.tri_centroid.assign(static_cast<size_t>(nfaces) * 3, 0.0);
+    bvh.tri_sqr_scale.assign(static_cast<size_t>(nfaces), 0.0);
     bvh.prim_indices.assign(nfaces, 0);
     compute_tri_aabbs(bvh);
 
@@ -231,6 +256,7 @@ inline bool ray_triangle(
     const T *v0,
     const T *v1,
     const T *v2,
+    const double sqr_scale,
     double &t) {
     const double e1[3] = {
         double(v1[0]) - double(v0[0]),
@@ -246,8 +272,15 @@ inline bool ray_triangle(
         dir[2] * e2[0] - dir[0] * e2[2],
         dir[0] * e2[1] - dir[1] * e2[0]};
 
+    // ``det`` is the sine of the angle between the ray and the plane of the
+    // triangle, times ``|e1 x e2|``. Compare the two squared so that the test
+    // is on the angle alone and needs no square root.
+    // A face of no area has no plane to intersect, and would otherwise divide
+    // through by a determinant of zero
+    if (sqr_scale <= 0.0)
+        return false;
     const double det = e1[0] * p[0] + e1[1] * p[1] + e1[2] * p[2];
-    if (std::abs(det) < BVH_DET_EPS)
+    if (det * det < BVH_DET_EPS * BVH_DET_EPS * sqr_scale)
         return false;
     const double inv_det = 1.0 / det;
 
@@ -324,7 +357,14 @@ inline int bvh_trace_ray(
                 const int64_t i1 = f[tri * 3 + 1];
                 const int64_t i2 = f[tri * 3 + 2];
                 double t;
-                if (!ray_triangle(origin, dir, &v[i0 * 3], &v[i1 * 3], &v[i2 * 3], t))
+                if (!ray_triangle(
+                        origin,
+                        dir,
+                        &v[i0 * 3],
+                        &v[i1 * 3],
+                        &v[i2 * 3],
+                        bvh.tri_sqr_scale[tri],
+                        t))
                     continue;
                 if (in_vector) {
                     if (t > 0.0 && t < best_t) {

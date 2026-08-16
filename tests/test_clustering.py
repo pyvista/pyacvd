@@ -212,6 +212,9 @@ def _brute_force_ray_trace(
     v0 = points[faces[:, 0]]
     e1 = points[faces[:, 1]] - v0
     e2 = points[faces[:, 2]] - v0
+    # the determinant is compared against the area scale of the face, not a
+    # fixed number, exactly as the tree does
+    sqr_scale = (np.cross(e1, e2) ** 2).sum(axis=1)
 
     dist = np.zeros(len(origins))
     hit = np.full(len(origins), -1, dtype=np.int32)
@@ -219,7 +222,7 @@ def _brute_force_ray_trace(
     for i, (origin, direction) in enumerate(zip(origins, dirs)):
         p = np.cross(direction, e2)
         det = np.einsum("ij,ij->i", e1, p)
-        ok = np.abs(det) >= 1e-6
+        ok = det**2 >= 1e-9**2 * sqr_scale
         inv_det = np.divide(1.0, det, out=np.zeros_like(det), where=ok)
 
         s = origin - v0
@@ -344,6 +347,46 @@ def test_ray_trace_reaches_past_a_thousand_faces() -> None:
 
     assert hit[0] == n
     assert dist[0] == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("scale", [1.0, 1e-3, 1e-6], ids=["unit", "milli", "micro"])
+def test_ray_trace_is_independent_of_mesh_scale(scale: float) -> None:
+    """A small mesh must be traced like a large one.
+
+    The Moller-Trumbore determinant carries the area of the face, so comparing
+    it against a fixed number rejects a face for being small rather than for
+    lying along the ray. At the tolerance this replaced, 99.7% of the faces of
+    the Stanford bunny subdivided once were unhittable and its cluster
+    centroids were left where they were.
+    """
+    points, faces = _offset_centroid_mesh()
+
+    dist, hit = clustering.ray_trace(
+        np.zeros((1, 3)), np.array([[0.0, 0.0, 1.0]]), points * scale, faces
+    )
+
+    assert hit[0] == 0
+    assert dist[0] == pytest.approx(scale)
+
+
+def test_ray_trace_ignores_a_face_of_no_area() -> None:
+    """A degenerate face has no plane to meet and must not be reported."""
+    points = np.array(
+        [
+            [-1.0, -1.0, 1.0],
+            [1.0, -1.0, 1.0],
+            [1.0, -1.0, 1.0],  # repeated, so the face is a line
+            [-1.0, -1.0, 5.0],
+            [1.0, -1.0, 5.0],
+            [0.0, 1.0, 5.0],
+        ]
+    )
+    faces = np.array([[0, 1, 2], [3, 4, 5]], dtype=np.int32)
+
+    dist, hit = clustering.ray_trace(np.zeros((1, 3)), np.array([[0.0, 0.0, 1.0]]), points, faces)
+
+    assert hit[0] == 1
+    assert dist[0] == pytest.approx(5.0)
 
 
 def test_ray_trace_in_vector_only_travels_forwards() -> None:
