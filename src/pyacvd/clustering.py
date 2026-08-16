@@ -30,8 +30,6 @@ T = TypeVar("T", np.float32, np.float64)
 
 LOG = logging.getLogger(__name__)
 
-MAX_THREADS = 4
-
 # Face indices are int32 through the C extension, so a mesh cannot have more
 # points than an int32 can address
 MAX_POINTS = int(np.iinfo(np.int32).max)
@@ -538,28 +536,35 @@ def ray_trace(
     source_n: NDArray[T],
     target_v: NDArray[T],
     target_f: NDArray_INT32,
-    neigh: NDArray_UINT32,
-    no_inf: bool = True,
-    num_threads: int = 8,
-    out_of_bounds_idx: Optional[int] = None,
     in_vector: bool = False,
-) -> Tuple[NDArray[T], NDArray[T]]:
-    if out_of_bounds_idx is None:
-        out_of_bounds_idx = 0
-    if out_of_bounds_idx == -1:
-        raise ValueError
-    dist, ind = _clustering.ray_trace(
-        source_v,
-        source_n,
-        target_v,
-        target_f,
-        neigh,
-        no_inf,
-        num_threads,
-        out_of_bounds_idx,
-        in_vector,
-    )
-    return dist, ind
+) -> Tuple[NDArray[T], NDArray_INT32]:
+    """Cast a ray from each source point and return where it meets the surface.
+
+    Parameters
+    ----------
+    source_v : numpy.ndarray
+        Origin of each ray, shaped ``(n, 3)``.
+    source_n : numpy.ndarray
+        Direction of each ray, shaped ``(n, 3)`` and of unit length.
+    target_v : numpy.ndarray
+        Vertices of the surface to cast against.
+    target_f : numpy.ndarray
+        Triangular faces of that surface, shaped ``(n, 3)``.
+    in_vector : bool, default: False
+        Only let a ray travel forwards along its direction. By default it
+        travels both ways and takes whichever intersection is nearest its
+        origin.
+
+    Returns
+    -------
+    numpy.ndarray
+        Signed distance along each ray to the surface, or ``0.0`` where the ray
+        meets it nowhere.
+    numpy.ndarray
+        Index of the face each ray hit, or ``-1`` where it hit none.
+
+    """
+    return _clustering.ray_trace(source_v, source_n, target_v, target_f, in_vector)
 
 
 def _unique_row_indices(a: Matrix) -> NDArray_INT32_64:
@@ -647,10 +652,7 @@ def create_mesh(
 
     # Update cluster centroid locations based on intersections
     if moveclus and cnorm is not None:
-        tgt_nbr = min(faces.shape[0] - 1, 1000)
-        fcent = face_centroid_arrays(points, faces)
-        _, ind = neighbors(fcent, ccent, tgt_nbr, sqr_dists=True)
-        dist, _ = ray_trace(ccent, cnorm, points, faces, ind, num_threads=MAX_THREADS)
+        dist, _ = ray_trace(ccent, cnorm, points, faces)
         ccent += cnorm * dist.reshape((-1, 1))
 
     # Ignore faces that do not connect to different clusters
