@@ -1,7 +1,8 @@
 """Point based clustering module"""
 
 import logging
-from typing import Any, Optional, Sequence, Tuple, TypeVar, Union, cast
+from collections.abc import Sequence
+from typing import Any, TypeVar, Union, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -148,11 +149,11 @@ class Clustering:
 
     """
 
-    def __init__(self, mesh: pv.PolyData, weights: Optional[NDArray_FLOAT32_64] = None) -> None:
+    def __init__(self, mesh: pv.PolyData, weights: NDArray_FLOAT32_64 | None = None) -> None:
         """Initialize neighbors."""
         self.mesh = mesh
-        self.clusters: Optional[NDArray_INT32] = None
-        self.nclus: Optional[int] = None
+        self.clusters: NDArray_INT32 | None = None
+        self.nclus: int | None = None
 
         if not self.mesh.is_all_triangles:
             raise ValueError(
@@ -245,7 +246,7 @@ class Clustering:
         self.mesh.copy_from(_subdivide(self.mesh, nsub))
         self._update_data()
 
-    def _update_data(self, weights: Optional[NDArray_FLOAT32_64] = None) -> None:
+    def _update_data(self, weights: NDArray_FLOAT32_64 | None = None) -> None:
         """Recompute neighbors and weights."""
         # Compute point weights and weighted points
         if weights is not None:
@@ -378,10 +379,10 @@ class Clustering:
 
 def point_weights(
     mesh: PolyData,
-    additional_weights: Optional[NDArray[T]] = None,
+    additional_weights: NDArray[T] | None = None,
     num_threads: int = 2,
     force_double: bool = False,
-) -> Tuple[NDArray[T], NDArray[T]]:
+) -> tuple[NDArray[T], NDArray[T]]:
     """
     Return weighted points.
 
@@ -473,9 +474,9 @@ def neighbors(
     target: NDArray_FLOAT32_64,
     n: int = 1,
     eps: float = 0.0,
-    distance_upper_bound: Optional[float] = None,
+    distance_upper_bound: float | None = None,
     sqr_dists: bool = False,
-) -> Tuple[NDArray_FLOAT32_64, NDArray_UINT32]:
+) -> tuple[NDArray_FLOAT32_64, NDArray_UINT32]:
     """
     Return the indices of the nearest n neighbors between source and target.
 
@@ -541,9 +542,9 @@ def ray_trace(
     neigh: NDArray_UINT32,
     no_inf: bool = True,
     num_threads: int = 8,
-    out_of_bounds_idx: Optional[int] = None,
+    out_of_bounds_idx: int | None = None,
     in_vector: bool = False,
-) -> Tuple[NDArray[T], NDArray[T]]:
+) -> tuple[NDArray[T], NDArray[T]]:
     if out_of_bounds_idx is None:
         out_of_bounds_idx = 0
     if out_of_bounds_idx == -1:
@@ -594,7 +595,7 @@ def create_mesh(
     mesh: pv.PolyData,
     area: NDArray_FLOAT64,
     clusters: NDArray_INT32,
-    cnorm: Optional[NDArray_FLOAT64],
+    cnorm: NDArray_FLOAT64 | None,
     nclus: int,
     moveclus: bool,
     flipnorm: bool = True,
