@@ -1,13 +1,13 @@
-from typing import Tuple, TypeVar, Union
+from typing import TypeAlias, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
 
-NDArray_UINT32 = NDArray[np.uint32]
-NDArray_INT32 = NDArray[np.int32]
-NDArray_FLOAT32 = NDArray[np.float32]
-NDArray_FLOAT64 = NDArray[np.float64]
-NDArray_FLOAT32_64 = Union[NDArray_FLOAT32, NDArray_FLOAT64]
+NDArray_UINT32: TypeAlias = NDArray[np.uint32]
+NDArray_INT32: TypeAlias = NDArray[np.int32]
+NDArray_FLOAT32: TypeAlias = NDArray[np.float32]
+NDArray_FLOAT64: TypeAlias = NDArray[np.float64]
+NDArray_FLOAT32_64: TypeAlias = NDArray_FLOAT32 | NDArray_FLOAT64
 
 T = TypeVar("T", np.float32, np.float64)
 
@@ -21,7 +21,7 @@ def cluster(
     max_iter: int,
     iso_try: int,
     init_only: bool,
-) -> Tuple[NDArray_INT32, bool, int]: ...
+) -> tuple[NDArray_INT32, bool, int]: ...
 def fast_cluster(
     neigh_arr: NDArray_INT32,
     neigh_off_arr: NDArray_INT32,
@@ -29,7 +29,7 @@ def fast_cluster(
     area_arr: NDArray[T],
     cent_arr: NDArray[T],
     edges_arr: NDArray_INT32,
-) -> Tuple[NDArray_INT32, int]: ...
+) -> tuple[NDArray_INT32, int]: ...
 def unique_edges(
     neigh_arr: NDArray_INT32,
     neigh_off_arr: NDArray_INT32,
@@ -51,7 +51,7 @@ def weighted_points(
     faces: NDArray_INT32,
     aweights: NDArray[T],
     n_threads: int,
-) -> Tuple[NDArray[T], NDArray[T]]: ...
+) -> tuple[NDArray[T], NDArray[T]]: ...
 def ray_trace(
     source_pt: NDArray[T],
     source_n: NDArray[T],
@@ -66,9 +66,9 @@ def ray_trace(
 def neighbors_from_trimesh(
     n_points: int,
     faces: NDArray_INT32,
-) -> Tuple[NDArray_INT32, NDArray_INT32]: ...
+) -> tuple[NDArray_INT32, NDArray_INT32]: ...
 def subdivision(
     points: NDArray[T],
     faces: NDArray_INT32,
     tgtlen: float,
-) -> Tuple[NDArray_FLOAT64, NDArray_INT32, int]: ...
+) -> tuple[NDArray_FLOAT64, NDArray_INT32, int]: ...
