@@ -4,7 +4,7 @@ requires = ["scikit-build-core >=0.4.3", "nanobind >=1.3.2"]
 
 [project]
 authors = [
-  {name = "Alex Kaszynski", email = "akascap@gmail.com"}
+  { name = "Alex Kaszynski", email = "akascap@gmail.com" }
 ]
 classifiers = [
   "License :: OSI Approved :: MIT License",
